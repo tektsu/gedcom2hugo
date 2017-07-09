@@ -25,10 +25,6 @@ type individual struct {
 
 type personIndex map[string]*individual
 
-type indSortable struct {
-	ID, Name string
-}
-
 // Generate reads the GEDCOM file and builds the Hugo input files.
 func Generate(cx *cli.Context) error {
 
@@ -95,6 +91,10 @@ func readGedcom(cx *cli.Context) (*gedcom.Gedcom, error) {
 	}
 
 	return gc, nil
+}
+
+type indSortable struct {
+	ID, Name string
 }
 
 type indSortableList []indSortable
