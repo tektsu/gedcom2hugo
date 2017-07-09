@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -16,56 +17,60 @@ import (
 )
 
 type individual struct {
-	FullName, LastNameFirst string // Names in different forms
-	AlphaWeight             int64  // Weight of individual entry based on aphabetical order
+	AlphaWeight int64 // Weight of individual entry based on aphabetical order
+	FamilyName,
+	FullName,
+	LastNameFirst string // Names in different forms
 }
 
-type indIndex map[string]*individual
+type personIndex map[string]*individual
 
 type indSortable struct {
 	ID, Name string
 }
 
-type indSortableList []indSortable
-
-func (l indSortableList) Len() int           { return len(l) }
-func (l indSortableList) Less(i, j int) bool { return l[i].Name < l[j].Name }
-func (l indSortableList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
-
 // Generate reads the GEDCOM file and builds the Hugo input files.
 func Generate(cx *cli.Context) error {
+
+	project := cx.String("project")
 
 	gc, err := readGedcom(cx)
 	if err != nil {
 		return cli.NewExitError(err, 1)
 	}
 
-	indIndex, err := individualIndex(cx, gc)
+	people, err := createPersonIndex(cx, gc)
 	if err != nil {
 		return cli.NewExitError(err, 1)
 	}
 
 	// Generate Person Pages.
-	project := cx.String("project")
 	personDir := filepath.Join(project, "content", "person")
 	err = os.MkdirAll(personDir, 0777)
 	if err != nil {
 		return cli.NewExitError(err, 1)
 	}
 
-	for _, rec := range gc.Individual {
-		id := rec.Xref
+	for _, person := range gc.Individual {
+		id := person.Xref
 		file := filepath.Join(personDir, strings.ToLower(id+".md"))
-		f, err := os.Create(file)
+		fh, err := os.Create(file)
 		if err != nil {
 			return cli.NewExitError(err, 1)
 		}
-		defer f.Close()
-		f.WriteString("---\n")
-		f.WriteString(fmt.Sprintf("title: \"%s\"\n", indIndex[id].FullName))
-		f.WriteString(fmt.Sprintf("weight: \"%d\"\n", indIndex[id].AlphaWeight))
-		f.WriteString("---\n")
-		f.WriteString(fmt.Sprintf("# %s\n", indIndex[id].FullName))
+		defer fh.Close()
+
+		data, err := newPersonData(cx, people, person)
+		if err != nil {
+			return cli.NewExitError(err, 1)
+		}
+
+		tpl := template.New("person")
+		tpl, err = tpl.Parse(personPageTemplate)
+		if err != nil {
+			return cli.NewExitError(err, 1)
+		}
+		err = tpl.Execute(fh, data)
 	}
 	return nil
 }
@@ -92,9 +97,15 @@ func readGedcom(cx *cli.Context) (*gedcom.Gedcom, error) {
 	return gc, nil
 }
 
+type indSortableList []indSortable
+
+func (l indSortableList) Len() int           { return len(l) }
+func (l indSortableList) Less(i, j int) bool { return l[i].Name < l[j].Name }
+func (l indSortableList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
+
 // individualIndex creates a map information about individuals keyed to Individual ID.
-func individualIndex(cx *cli.Context, gc *gedcom.Gedcom) (indIndex, error) {
-	index := make(indIndex)
+func createPersonIndex(cx *cli.Context, gc *gedcom.Gedcom) (*personIndex, error) {
+	index := make(personIndex)
 
 	//Build the index.
 	for _, i := range gc.Individual {
@@ -102,6 +113,7 @@ func individualIndex(cx *cli.Context, gc *gedcom.Gedcom) (indIndex, error) {
 
 		if len(i.Name) > 0 {
 			given, family := extractNames(i.Name[0].Name)
+			index[i.Xref].FamilyName = family
 			index[i.Xref].FullName = fmt.Sprintf("%s %s", given, family)
 			index[i.Xref].LastNameFirst = fmt.Sprintf("%s, %s", family, given)
 		}
@@ -125,7 +137,7 @@ func individualIndex(cx *cli.Context, gc *gedcom.Gedcom) (indIndex, error) {
 		weight++
 	}
 
-	return index, nil
+	return &index, nil
 }
 
 // extractNames splits a full name into a given name and a family name.
