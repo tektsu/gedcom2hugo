@@ -40,6 +40,35 @@ func Generate(cx *cli.Context) error {
 		return cli.NewExitError(err, 1)
 	}
 
+	// Generate Source Pages.
+	sourceDir := filepath.Join(project, "content", "source")
+	err = os.MkdirAll(sourceDir, 0777)
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+
+	for _, source := range gc.Source {
+		id := source.Xref
+		file := filepath.Join(sourceDir, strings.ToLower(id+".md"))
+		fh, err := os.Create(file)
+		if err != nil {
+			return cli.NewExitError(err, 1)
+		}
+		defer fh.Close()
+
+		data, err := newSourceData(cx, source)
+		if err != nil {
+			return cli.NewExitError(err, 1)
+		}
+
+		tpl := template.New("source")
+		tpl, err = tpl.Parse(sourcePageTemplate)
+		if err != nil {
+			return cli.NewExitError(err, 1)
+		}
+		err = tpl.Execute(fh, data)
+	}
+
 	// Generate Person Pages.
 	personDir := filepath.Join(project, "content", "person")
 	err = os.MkdirAll(personDir, 0777)
