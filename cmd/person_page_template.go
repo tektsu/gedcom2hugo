@@ -3,17 +3,17 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/iand/gedcom"
+	"github.com/tektsu/gedcom"
 	"github.com/urfave/cli"
 )
 
-const personPageTemplate string = `+++
-title = "{{ .Name.Full }}"
+const personPageTemplate string = `---
+title: "{{ .Name.Full }}"
 url: "/{{ .ID }}/"
-categories = [
-	"Person"
-]
-+++
+categories:
+  - Person
+{{ if .Sex }}sex: "{{ .Sex }}"{{ end }}
+---
 # {{ .Name.Full }}
 
 Sex: {{ .Sex  }}

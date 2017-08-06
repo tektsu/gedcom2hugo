@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/iand/gedcom"
+	"github.com/tektsu/gedcom"
 	"github.com/urfave/cli"
 )
 
