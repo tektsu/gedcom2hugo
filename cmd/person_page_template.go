@@ -29,22 +29,6 @@ Sex: {{ .Sex  }}
 {{- end }}
 `
 
-type personName struct {
-	Full       string
-	Last       string
-	LastFirst  string
-	SourcesInd []int
-}
-
-type personData struct {
-	ID        string
-	Name      personName
-	Aliases   []personName
-	LastNames []string
-	Sex       string
-	Sources   []SourceRef
-}
-
 func newPersonData(cx *cli.Context, people *personIndex, person *gedcom.IndividualRecord) (personData, error) {
 
 	cc := 0 // Citation Counter

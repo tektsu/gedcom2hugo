@@ -17,15 +17,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-type individual struct {
-	AlphaWeight int64 // Weight of individual entry based on aphabetical order
-	FamilyName,
-	FullName,
-	LastNameFirst string // Names in different forms
-}
-
-type personIndex map[string]*individual
-
 var sourceList SourceList
 
 func add(x, y int) int {

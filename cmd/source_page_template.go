@@ -47,33 +47,6 @@ title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
 </table>
 `
 
-type SourceList map[int]string
-
-type SourceRef struct {
-	RefNum int
-	Ref    string
-}
-
-type sourceData struct {
-	ID          string
-	Author      string
-	Abbr        string
-	Publication string
-	Text        string
-	Title       string
-	Form        string
-	File        string
-	FileNumber  string
-	Type        string
-	Place       string
-	Date        string
-	DateViewed  string
-	URL         string
-	DocLocation string
-	RefNum      int
-	Ref         string
-}
-
 func newSourceData(cx *cli.Context, source *gedcom.SourceRecord) (sourceData, error) {
 
 	data := sourceData{
