@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/tektsu/gedcom"
 	"github.com/urfave/cli"
@@ -17,15 +18,22 @@ categories:
 {{- end }}
 {{ if .Sex }}sex: "{{ .Sex }}"{{ end }}
 ---
-# {{ .Name.Full }}
+# {{ .Name.Full }}{{ if .Name.SourcesInd }}{{ range .Name.SourcesInd }} <span class="citref">[{{ . }}]</span>{{ end }}{{ end }}
 
 Sex: {{ .Sex  }}
+
+{{ if .Sources -}}
+<div id="sources">
+{{ range $i, $s := .Sources }}{{ add $i 1 }}. {{ $s.Ref }}{{ end }}
+</div>
+{{- end }}
 `
 
 type personName struct {
-	Full      string
-	Last      string
-	LastFirst string
+	Full       string
+	Last       string
+	LastFirst  string
+	SourcesInd []int
 }
 
 type personData struct {
@@ -34,9 +42,12 @@ type personData struct {
 	Aliases   []personName
 	LastNames []string
 	Sex       string
+	Sources   []SourceRef
 }
 
 func newPersonData(cx *cli.Context, people *personIndex, person *gedcom.IndividualRecord) (personData, error) {
+
+	cc := 0 // Citation Counter
 
 	id := person.Xref
 	data := personData{
@@ -53,6 +64,22 @@ func newPersonData(cx *cli.Context, people *personIndex, person *gedcom.Individu
 			Full:      fmt.Sprintf("%s %s", given, family),
 			LastFirst: fmt.Sprintf("%s, %s", family, given),
 		}
+
+		for _, c := range n.Citation {
+			r, err := strconv.Atoi(c.Source.Xref[1:len(c.Source.Xref)])
+			if err != nil {
+				panic(err)
+			}
+			cc++
+			name.SourcesInd = append(name.SourcesInd, cc)
+			ref := sourceList[r]
+			data.Sources = append(data.Sources, SourceRef{
+				RefNum: r,
+				Ref:    ref,
+			})
+
+		}
+
 		if i == 0 {
 			data.Name = name
 		} else {

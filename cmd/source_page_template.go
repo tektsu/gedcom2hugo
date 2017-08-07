@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/tektsu/gedcom"
@@ -26,7 +27,7 @@ title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
 {{ if .DocLocation }}doclocation: "{{ .DocLocation }}"{{ end }}
 {{ if .DateViewed }}dateviewed: "{{ .DateViewed }}"{{ end }}
 ---
-<p class="sourceref">{{ .Ref }}</p>
+<p class="sourceref">{{ .RefNum }}: {{ .Ref }}</p>
 <table id="source">
 <tr><th>Field</th><th>Data</th></tr>
 {{ if .Type }}<tr><td>Type</td><td>{{ .Type }}</td></tr>{{ end }}
@@ -46,6 +47,13 @@ title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
 </table>
 `
 
+type SourceList map[int]string
+
+type SourceRef struct {
+	RefNum int
+	Ref    string
+}
+
 type sourceData struct {
 	ID          string
 	Author      string
@@ -62,6 +70,7 @@ type sourceData struct {
 	DateViewed  string
 	URL         string
 	DocLocation string
+	RefNum      int
 	Ref         string
 }
 
@@ -88,6 +97,12 @@ func newSourceData(cx *cli.Context, source *gedcom.SourceRecord) (sourceData, er
 	re := regexp.MustCompile("[0-9]+")
 	matches := re.FindAllString(source.Xref, 1)
 	data.Ref = fmt.Sprintf("%s. ", matches[0])
+	v, err := strconv.Atoi(matches[0])
+	if err != nil {
+		panic(fmt.Sprintf("Error converting [%s] to integer", matches[0]))
+	}
+	data.RefNum = v
+
 	var refs []string
 	if data.Author != "" {
 		refs = append(refs, data.Author)
@@ -95,19 +110,22 @@ func newSourceData(cx *cli.Context, source *gedcom.SourceRecord) (sourceData, er
 	if data.Title != "" {
 		refs = append(refs, fmt.Sprintf("\"%s\"", data.Title))
 	}
+	if data.Date != "" {
+		refs = append(refs, data.Date)
+	}
+	if data.Place != "" {
+		refs = append(refs, data.Place)
+	}
 	if data.Type != "" {
 		refs = append(refs, data.Type)
 	}
 	if data.URL != "" {
 		refs = append(refs, fmt.Sprintf("[%s]", data.URL))
 	}
-	if data.Date != "" {
-		refs = append(refs, data.Date)
-	}
 	if data.FileNumber != "" {
 		refs = append(refs, data.FileNumber)
 	}
-	data.Ref += strings.Join(refs, ", ")
+	data.Ref = strings.Join(refs, ", ")
 
 	return data, nil
 }

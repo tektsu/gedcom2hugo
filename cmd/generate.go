@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/tektsu/gedcom"
 	"github.com/urfave/cli"
 )
@@ -24,6 +25,12 @@ type individual struct {
 }
 
 type personIndex map[string]*individual
+
+var sourceList SourceList
+
+func add(x, y int) int {
+	return x + y
+}
 
 // Generate reads the GEDCOM file and builds the Hugo input files.
 func Generate(cx *cli.Context) error {
@@ -41,6 +48,7 @@ func Generate(cx *cli.Context) error {
 	}
 
 	// Generate Source Pages.
+	sourceList = make(SourceList)
 	sourceDir := filepath.Join(project, "content", "source")
 	err = os.MkdirAll(sourceDir, 0777)
 	if err != nil {
@@ -60,6 +68,7 @@ func Generate(cx *cli.Context) error {
 		if err != nil {
 			return cli.NewExitError(err, 1)
 		}
+		sourceList[data.RefNum] = data.Ref
 
 		tpl := template.New("source")
 		tpl, err = tpl.Parse(sourcePageTemplate)
@@ -76,8 +85,12 @@ func Generate(cx *cli.Context) error {
 		return cli.NewExitError(err, 1)
 	}
 
+	spew.Config.MaxDepth = 5
 	for _, person := range gc.Individual {
 		id := person.Xref
+		//if id == "I126" {
+		//	fmt.Printf("%s\n", spew.Sdump(person))
+		//}
 		file := filepath.Join(personDir, strings.ToLower(id+".md"))
 		fh, err := os.Create(file)
 		if err != nil {
@@ -91,6 +104,8 @@ func Generate(cx *cli.Context) error {
 		}
 
 		tpl := template.New("person")
+		funcs := template.FuncMap{"add": add}
+		tpl.Funcs(funcs)
 		tpl, err = tpl.Parse(personPageTemplate)
 		if err != nil {
 			return cli.NewExitError(err, 1)
