@@ -19,14 +19,28 @@ categories:
 title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
 {{ if .Abbr }}shorttitle: "{{ .Abbr }}"{{ end }}
 {{ if .Publication }}pubfacts: "{{ .Publication }}"{{ end }}
-{{ if .Date }}docdate: "{{ .Date }}"{{ end }}
-{{ if .Place }}place: "{{ .Place }}"{{ end }}
-{{ if .File }}file: "{{ .File }}"{{ end }}
 {{ if .Form }}form: "{{ .Form }}"{{ end }}
-{{ if .FileNumber }}filenumber: "{{ .FileNumber }}"{{ end }}
-{{ if .URL }}docurl: "{{ .URL }}"{{ end }}
-{{ if .DocLocation }}doclocation: "{{ .DocLocation }}"{{ end }}
-{{ if .DateViewed }}dateviewed: "{{ .DateViewed }}"{{ end }}
+{{ if .File }}file:
+{{ range .File }}  - "{{ . }}"
+{{ end }}{{ end }}
+{{ if .FileNumber }}filenumber:
+{{ range .FileNumber }}  - "{{ . }}"
+{{ end }}{{ end }}
+{{ if .Date }}docdate:
+{{ range .Date }}  - "{{ . }}"
+{{ end }}{{ end }}
+{{ if .DateViewed }}dateviewed:
+{{ range .DateViewed }}  - "{{ . }}"
+{{ end }}{{ end }}
+{{ if .Place }}place:
+{{ range .Place }}  - "{{ . }}"
+{{ end }}{{ end }}
+{{ if .URL }}docurl:
+{{ range .URL }}  - "{{ . }}"
+{{ end }}{{ end }}
+{{ if .DocLocation }}doclocation:
+{{ range .DocLocation }}  - "{{ . }}"
+{{ end }}{{ end }}
 {{ if .RefNum }}refnum: "{{ .RefNum }}"{{ end }}
 {{ if .Ref }}ref: |
   {{ .Ref }}{{ end }}
@@ -43,9 +57,9 @@ func newSourceData(cx *cli.Context, source *gedcom.SourceRecord) (sourceData, er
 		Abbr:        source.Abbr,
 		Publication: source.Publication,
 		Text:        source.Text,
+		Type:        source.Type,
 		File:        source.File,
 		FileNumber:  source.FileNumber,
-		Type:        source.Type,
 		Place:       source.Place,
 		Date:        source.Date,
 		DateViewed:  source.DateViewed,
@@ -63,6 +77,36 @@ func newSourceData(cx *cli.Context, source *gedcom.SourceRecord) (sourceData, er
 	}
 	data.RefNum = v
 
+	// Copy in the arrays
+	if len(source.File) > 0 {
+		data.File = make([]string, len(source.File))
+		copy(data.File, source.File)
+	}
+	if len(source.FileNumber) > 0 {
+		data.FileNumber = make([]string, len(source.FileNumber))
+		copy(data.FileNumber, source.FileNumber)
+	}
+	if len(source.Place) > 0 {
+		data.Place = make([]string, len(source.Place))
+		copy(data.Place, source.Place)
+	}
+	if len(source.Date) > 0 {
+		data.Date = make([]string, len(source.Date))
+		copy(data.Date, source.Date)
+	}
+	if len(source.DateViewed) > 0 {
+		data.DateViewed = make([]string, len(source.DateViewed))
+		copy(data.DateViewed, source.DateViewed)
+	}
+	if len(source.URL) > 0 {
+		data.URL = make([]string, len(source.URL))
+		copy(data.URL, source.URL)
+	}
+	if len(source.DocLocation) > 0 {
+		data.DocLocation = make([]string, len(source.DocLocation))
+		copy(data.DocLocation, source.DocLocation)
+	}
+
 	var refs []string
 	if data.Author != "" {
 		refs = append(refs, data.Author)
@@ -70,20 +114,20 @@ func newSourceData(cx *cli.Context, source *gedcom.SourceRecord) (sourceData, er
 	if data.Title != "" {
 		refs = append(refs, fmt.Sprintf("\"%s\"", data.Title))
 	}
-	if data.Date != "" {
-		refs = append(refs, data.Date)
+	if len(data.Date) > 0 {
+		refs = append(refs, data.Date[0])
 	}
-	if data.Place != "" {
-		refs = append(refs, data.Place)
+	if len(data.Place) > 0 {
+		refs = append(refs, data.Place[0])
 	}
 	if data.Type != "" {
 		refs = append(refs, data.Type)
 	}
-	if data.URL != "" {
-		refs = append(refs, fmt.Sprintf("[%s]", data.URL))
+	if len(data.URL) > 0 {
+		refs = append(refs, fmt.Sprintf("[%s]", data.URL[0]))
 	}
-	if data.FileNumber != "" {
-		refs = append(refs, data.FileNumber)
+	if len(data.FileNumber) > 0 {
+		refs = append(refs, data.FileNumber[0])
 	}
 	data.Ref = strings.Join(refs, ", ")
 

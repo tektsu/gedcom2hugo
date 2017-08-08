@@ -39,15 +39,15 @@ type sourceData struct {
 	Publication string
 	Text        string
 	Title       string
-	Form        string
-	File        string
-	FileNumber  string
 	Type        string
-	Place       string
-	Date        string
-	DateViewed  string
-	URL         string
-	DocLocation string
+	Form        string
+	File        []string
+	FileNumber  []string
+	Place       []string
+	Date        []string
+	DateViewed  []string
+	URL         []string
+	DocLocation []string
 	RefNum      int
 	Ref         string
 }

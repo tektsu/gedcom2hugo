@@ -85,9 +85,9 @@ func Generate(cx *cli.Context) error {
 	spew.Config.MaxDepth = 5
 	for _, person := range gc.Individual {
 		id := person.Xref
-		if id == "I126" {
-			fmt.Printf("%s\n", spew.Sdump(person))
-		}
+		//if id == "I126" {
+		//	fmt.Printf("%s\n", spew.Sdump(person))
+		//}
 		file := filepath.Join(personDir, strings.ToLower(id+".md"))
 		fh, err := os.Create(file)
 		if err != nil {
