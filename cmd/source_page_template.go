@@ -19,32 +19,19 @@ categories:
 title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
 {{ if .Abbr }}shorttitle: "{{ .Abbr }}"{{ end }}
 {{ if .Publication }}pubfacts: "{{ .Publication }}"{{ end }}
-{{ if .Date }}date: "{{ .Date }}"{{ end }}
+{{ if .Date }}docdate: "{{ .Date }}"{{ end }}
 {{ if .Place }}place: "{{ .Place }}"{{ end }}
 {{ if .File }}file: "{{ .File }}"{{ end }}
+{{ if .Form }}form: "{{ .Form }}"{{ end }}
 {{ if .FileNumber }}filenumber: "{{ .FileNumber }}"{{ end }}
 {{ if .URL }}docurl: "{{ .URL }}"{{ end }}
 {{ if .DocLocation }}doclocation: "{{ .DocLocation }}"{{ end }}
 {{ if .DateViewed }}dateviewed: "{{ .DateViewed }}"{{ end }}
+{{ if .RefNum }}refnum: "{{ .RefNum }}"{{ end }}
+{{ if .Ref }}ref: |
+  {{ .Ref }}{{ end }}
 ---
-<p class="sourceref">{{ .RefNum }}: {{ .Ref }}</p>
-<table id="source">
-<tr><th>Field</th><th>Data</th></tr>
-{{ if .Type }}<tr><td>Type</td><td>{{ .Type }}</td></tr>{{ end }}
-{{ if .Author }}<tr><td>Author</td><td>{{ .Author }}</td></tr>{{ end }}
-{{ if .Title }}<tr><td>Title</td><td>{{ .Title }}</td></tr>{{ end }}
-{{ if .Abbr }}<tr><td>Short Title</td><td>{{ .Abbr }}</td></tr>{{ end }}
-{{ if .Publication }}<tr><td>Publication Facts</td><td>{{ .Publication }}</td></tr>{{ end }}
-{{ if .Date }}<tr><td>Date</td><td>{{ .Date }}</td></tr>{{ end }}
-{{ if .Place }}<tr><td>Place</td><td>{{ .Place }}</td></tr>{{ end }}
-{{ if .File }}<tr><td>File</td><td>{{ .File }}</td></tr>{{ end }}
-{{ if .FileNumber }}<tr><td>File Number</td><td>{{ .FileNumber }}</td></tr>{{ end }}
-{{ if .Form }}<tr><td>Form</td><td>{{ .Form }}</td></tr>{{ end }}
-{{ if .URL }}<tr><td>URL</td><td><a href="{{ .URL }}" target="_blank">{{ .URL }}</a></td></tr>{{ end }}
-{{ if .DocLocation }}<tr><td>Document Location</td><td>{{ .DocLocation }}</td></tr>{{ end }}
-{{ if .DateViewed }}<tr><td>Date Viewed</td><td>{{ .DateViewed }}</td></tr>{{ end }}
-{{ if .Text }}<tr><td>Text</td><td>{{ .Text }}</td></tr>{{ end }}
-</table>
+{{ "sourcebody" | shortcode }}
 `
 
 func newSourceData(cx *cli.Context, source *gedcom.SourceRecord) (sourceData, error) {

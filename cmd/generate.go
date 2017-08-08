@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
+	"text/template"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/tektsu/gedcom"
@@ -21,6 +21,10 @@ var sourceList SourceList
 
 func add(x, y int) int {
 	return x + y
+}
+
+func shortcode(c string) string {
+	return fmt.Sprintf("{{< %s >}}", c)
 }
 
 // Generate reads the GEDCOM file and builds the Hugo input files.
@@ -62,6 +66,8 @@ func Generate(cx *cli.Context) error {
 		sourceList[data.RefNum] = data.Ref
 
 		tpl := template.New("source")
+		funcs := template.FuncMap{"shortcode": shortcode}
+		tpl.Funcs(funcs)
 		tpl, err = tpl.Parse(sourcePageTemplate)
 		if err != nil {
 			return cli.NewExitError(err, 1)
@@ -79,9 +85,9 @@ func Generate(cx *cli.Context) error {
 	spew.Config.MaxDepth = 5
 	for _, person := range gc.Individual {
 		id := person.Xref
-		//if id == "I126" {
-		//	fmt.Printf("%s\n", spew.Sdump(person))
-		//}
+		if id == "I126" {
+			fmt.Printf("%s\n", spew.Sdump(person))
+		}
 		file := filepath.Join(personDir, strings.ToLower(id+".md"))
 		fh, err := os.Create(file)
 		if err != nil {
