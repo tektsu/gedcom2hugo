@@ -19,7 +19,21 @@ categories:
 title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
 {{ if .Abbr }}shorttitle: "{{ .Abbr }}"{{ end }}
 {{ if .Publication }}pubfacts: "{{ .Publication }}"{{ end }}
-{{ if .Form }}form: "{{ .Form }}"{{ end }}
+{{ if .Periodical }}periodical: "{{ .Periodical }}"{{ end }}
+{{ if .Volume }}volume: "{{ .Volume }}"{{ end }}
+{{ if .MediaType }}mediatype: "{{ .MediaType }}"{{ end }}
+{{ if .Repository }}repository:
+{{ range .Repository }}  - "{{ . }}"
+{{ end }}{{ end }}
+{{ if .Submitter }}submitter:
+{{ range .Submitter }}  - "{{ . }}"
+{{ end }}{{ end }}
+{{ if .Page }}page:
+{{ range .Page }}  - "{{ . }}"
+{{ end }}{{ end }}
+{{ if .Film }}film:
+{{ range .Film }}  - "{{ . }}"
+{{ end }}{{ end }}
 {{ if .File }}file:
 {{ range .File }}  - "{{ . }}"
 {{ end }}{{ end }}
@@ -65,6 +79,9 @@ func newSourceData(cx *cli.Context, source *gedcom.SourceRecord) (sourceData, er
 		DateViewed:  source.DateViewed,
 		URL:         source.URL,
 		DocLocation: source.DocLocation,
+		Periodical:  source.Periodical,
+		Volume:      source.Volume,
+		MediaType:   source.MediaType,
 	}
 
 	// Build the reference string.
@@ -105,6 +122,22 @@ func newSourceData(cx *cli.Context, source *gedcom.SourceRecord) (sourceData, er
 	if len(source.DocLocation) > 0 {
 		data.DocLocation = make([]string, len(source.DocLocation))
 		copy(data.DocLocation, source.DocLocation)
+	}
+	if len(source.Repository) > 0 {
+		data.Repository = make([]string, len(source.Repository))
+		copy(data.Repository, source.Repository)
+	}
+	if len(source.Submitter) > 0 {
+		data.Submitter = make([]string, len(source.Submitter))
+		copy(data.Submitter, source.Submitter)
+	}
+	if len(source.Page) > 0 {
+		data.Page = make([]string, len(source.Page))
+		copy(data.Page, source.Page)
+	}
+	if len(source.Film) > 0 {
+		data.Film = make([]string, len(source.Film))
+		copy(data.Film, source.Film)
 	}
 
 	var refs []string

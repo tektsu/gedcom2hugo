@@ -50,4 +50,11 @@ type sourceData struct {
 	DocLocation []string
 	RefNum      int
 	Ref         string
+	Periodical  string
+	Volume      string
+	MediaType   string
+	Repository  []string
+	Submitter   []string
+	Page        []string
+	Film        []string
 }
