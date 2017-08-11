@@ -40,7 +40,6 @@ type sourceData struct {
 	Text        string
 	Title       string
 	Type        string
-	Form        string
 	File        []string
 	FileNumber  []string
 	Place       []string

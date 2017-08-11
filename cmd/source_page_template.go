@@ -150,6 +150,18 @@ func newSourceData(cx *cli.Context, source *gedcom.SourceRecord) (sourceData, er
 	if len(data.Date) > 0 {
 		refs = append(refs, data.Date[0])
 	}
+	if data.Periodical != "" {
+		refs = append(refs, fmt.Sprintf("%s", data.Periodical))
+	}
+	if data.Volume != "" {
+		refs = append(refs, fmt.Sprintf("%s", data.Volume))
+	}
+	if len(data.Page) > 0 {
+		refs = append(refs, fmt.Sprintf("p %s", data.Page[0]))
+	}
+	if len(data.Film) > 0 {
+		refs = append(refs, data.Film[0])
+	}
 	if len(data.Place) > 0 {
 		refs = append(refs, data.Place[0])
 	}
