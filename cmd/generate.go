@@ -17,7 +17,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var sourceList SourceList
+var sl sourceList
 
 func add(x, y int) int {
 	return x + y
@@ -43,7 +43,7 @@ func Generate(cx *cli.Context) error {
 	}
 
 	// Generate Source Pages.
-	sourceList = make(SourceList)
+	sl = make(sourceList)
 	sourceDir := filepath.Join(project, "content", "source")
 	err = os.MkdirAll(sourceDir, 0777)
 	if err != nil {
@@ -63,7 +63,7 @@ func Generate(cx *cli.Context) error {
 		if err != nil {
 			return cli.NewExitError(err, 1)
 		}
-		sourceList[data.RefNum] = data.Ref
+		sl[data.RefNum] = data.Ref
 
 		tpl := template.New("source")
 		funcs := template.FuncMap{"shortcode": shortcode}
@@ -112,7 +112,7 @@ func Generate(cx *cli.Context) error {
 	return nil
 }
 
-// readGedcom reads the GEDCOM file specified ib the context into memory.
+// readGedcom reads the GEDCOM file specified in the context into memory.
 func readGedcom(cx *cli.Context) (*gedcom.Gedcom, error) {
 	var gc *gedcom.Gedcom
 
@@ -126,11 +126,20 @@ func readGedcom(cx *cli.Context) (*gedcom.Gedcom, error) {
 	}
 
 	decoder := gedcom.NewDecoder(bytes.NewReader(data))
+	decoder.SetUnrecTagFunc(func(l int, t, v, x string) {
+		if t[0:1] == "_" {
+			return
+		}
+		fmt.Printf("Unrecognized tag: %d %s %s", l, t, v)
+		if x != "" {
+			fmt.Printf(" (%s)", x)
+		}
+		fmt.Println("")
+	})
 	gc, err = decoder.Decode()
 	if err != nil {
 		return gc, err
 	}
-
 	return gc, nil
 }
 

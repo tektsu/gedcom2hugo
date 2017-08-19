@@ -60,6 +60,12 @@ title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
   {{ .Ref }}{{ end }}
 ---
 {{ "sourcebody" | shortcode }}
+
+{{ if .Text }}
+### Notes
+
+{{ .Text }}
+{{ end }}
 `
 
 func newSourceData(cx *cli.Context, source *gedcom.SourceRecord) (sourceData, error) {

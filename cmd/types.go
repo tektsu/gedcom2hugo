@@ -13,7 +13,7 @@ type personData struct {
 	Aliases   []personName
 	LastNames []string
 	Sex       string
-	Sources   []SourceRef
+	Sources   []sourceRef
 }
 
 type personIndex map[string]*individual
@@ -25,9 +25,9 @@ type personName struct {
 	SourcesInd []int
 }
 
-type SourceList map[int]string
+type sourceList map[int]string
 
-type SourceRef struct {
+type sourceRef struct {
 	RefNum int
 	Ref    string
 }

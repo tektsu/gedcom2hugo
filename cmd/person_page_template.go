@@ -24,7 +24,7 @@ Sex: {{ .Sex  }}
 
 {{ if .Sources -}}
 <div id="sources">
-{{ range $i, $s := .Sources }}{{ add $i 1 }}. {{ $s.Ref }}{{ end }}
+{{ range $i, $s := .Sources }}<a href="/s{{ $s.RefNum }}">{{ add $i 1 }}. {{ $s.Ref }}</a>{{ end }}
 </div>
 {{- end }}
 `
@@ -56,8 +56,8 @@ func newPersonData(cx *cli.Context, people *personIndex, person *gedcom.Individu
 			}
 			cc++
 			name.SourcesInd = append(name.SourcesInd, cc)
-			ref := sourceList[r]
-			data.Sources = append(data.Sources, SourceRef{
+			ref := sl[r]
+			data.Sources = append(data.Sources, sourceRef{
 				RefNum: r,
 				Ref:    ref,
 			})
