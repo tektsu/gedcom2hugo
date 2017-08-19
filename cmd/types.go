@@ -25,13 +25,6 @@ type personName struct {
 	SourcesInd []int
 }
 
-type sourceList map[int]string
-
-type sourceRef struct {
-	RefNum int
-	Ref    string
-}
-
 type sourceData struct {
 	ID          string
 	Author      string
@@ -56,4 +49,11 @@ type sourceData struct {
 	Submitter   []string
 	Page        []string
 	Film        []string
+}
+
+type sourceList map[int]string
+
+type sourceRef struct {
+	RefNum int
+	Ref    string
 }
