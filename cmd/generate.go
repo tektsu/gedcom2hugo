@@ -101,7 +101,7 @@ func Generate(cx *cli.Context) error {
 		}
 
 		tpl := template.New("person")
-		funcs := template.FuncMap{"add": add}
+		funcs := template.FuncMap{"add": add, "shortcode": shortcode}
 		tpl.Funcs(funcs)
 		tpl, err = tpl.Parse(personPageTemplate)
 		if err != nil {

@@ -14,19 +14,25 @@ url: "/{{ .ID }}/"
 categories:
   - Person
 {{ if .LastNames }}lastnames:
-{{ range .LastNames }}  - {{ . }}{{ end }}
+  {{ range .LastNames }}- {{ . }}{{ end }}
 {{- end }}
+name:
+  full: "{{ .Name.Full }}"
+  last: "{{ .Name.Last }}"
+  lastfirst: "{{ .Name.LastFirst }}"
+  {{ if .Name.SourcesInd -}}
+  sources:
+  {{ range .Name.SourcesInd }}  - {{ . }}{{ end }}
+  {{- end }}
 {{ if .Sex }}sex: "{{ .Sex }}"{{ end }}
----
-# {{ .Name.Full }}{{ if .Name.SourcesInd }}{{ range .Name.SourcesInd }} <span class="citref">[{{ . }}]</span>{{ end }}{{ end }}
-
-Sex: {{ .Sex  }}
-
-{{ if .Sources -}}
-<div id="sources">
-{{ range $i, $s := .Sources }}<a href="/s{{ $s.RefNum }}">{{ add $i 1 }}. {{ $s.Ref }}</a>{{ end }}
-</div>
+{{ if .Sources }}sources:
+  {{ range .Sources }}-
+    ref: {{ .Ref }}
+    refnum: {{ .RefNum }}
+  {{- end }}
 {{- end }}
+---
+{{ "personbody" | shortcode }}
 `
 
 func newPersonData(cx *cli.Context, people *personIndex, person *gedcom.IndividualRecord) (personData, error) {
