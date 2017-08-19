@@ -22,14 +22,15 @@ name:
   lastfirst: "{{ .Name.LastFirst }}"
   {{ if .Name.SourcesInd -}}
   sources:
-  {{ range .Name.SourcesInd }}  - {{ . }}{{ end }}
+  {{ range .Name.SourcesInd }}  - {{ . }}
+  {{ end }}
   {{- end }}
 {{ if .Sex }}sex: "{{ .Sex }}"{{ end }}
 {{ if .Sources }}sources:
   {{ range .Sources }}-
     ref: {{ .Ref }}
     refnum: {{ .RefNum }}
-  {{- end }}
+  {{ end }}
 {{- end }}
 ---
 {{ "personbody" | shortcode }}
