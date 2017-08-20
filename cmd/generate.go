@@ -167,6 +167,7 @@ func createPersonIndex(cx *cli.Context, gc *gedcom.Gedcom) (personIndex, error) 
 
 		if len(i.Name) > 0 {
 			given, family := extractNames(i.Name[0].Name)
+			index[i.Xref].GivenName = given
 			index[i.Xref].FamilyName = family
 			index[i.Xref].FullName = fmt.Sprintf("%s %s", given, family)
 			index[i.Xref].LastNameFirst = fmt.Sprintf("%s, %s", family, given)

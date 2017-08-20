@@ -2,6 +2,7 @@ package cmd
 
 type individual struct {
 	AlphaWeight int64 // Weight of individual entry based on aphabetical order
+	GivenName,
 	FamilyName,
 	FullName,
 	LastNameFirst string // Names in different forms

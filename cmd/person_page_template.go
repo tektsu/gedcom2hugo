@@ -18,7 +18,6 @@ categories:
 {{- end }}
 ---
 
-
 <div id="person">
 
 <div id="personal_info">
@@ -49,6 +48,16 @@ categories:
 		{{- end -}}
 	{{- end -}}<br />
 </td></tr>
+{{ $length := len .Children }} {{ if gt $length 0 }}
+<tr><th>Siblings</th><td>
+{{ range .Children }}
+	<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
+	{{- if .SourcesInd -}}
+		<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
+	{{- end -}}<br />
+{{ end }}
+</td></tr>
+{{ end }}
 </table>
 {{ end }}
 </div>
@@ -154,6 +163,29 @@ func newPersonData(cx *cli.Context, people personIndex, person *gedcom.Individua
 						Ref:    sl[r],
 					})
 				}
+			}
+			for _, cr := range fr.Family.Child {
+				if cr.Xref == data.ID {
+					continue
+				}
+				child := personRef{
+					ID:   cr.Xref,
+					Name: people[cr.Xref].GivenName,
+				}
+				for _, c := range cr.Name[0].Citation {
+					r, err := strconv.Atoi(c.Source.Xref[1:len(c.Source.Xref)])
+					if err != nil {
+						panic(err)
+					}
+					cc++
+
+					child.SourcesInd = append(child.SourcesInd, cc)
+					data.Sources = append(data.Sources, sourceRef{
+						RefNum: r,
+						Ref:    sl[r],
+					})
+				}
+				f.Children = append(f.Children, child)
 			}
 
 			data.ParentsFamily = append(data.ParentsFamily, f)
