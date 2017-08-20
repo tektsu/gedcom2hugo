@@ -8,12 +8,22 @@ type individual struct {
 }
 
 type personData struct {
+	ID            string
+	Name          personName
+	Aliases       []personName
+	LastNames     []string
+	Sex           string
+	Sources       []sourceRef
+	ParentsFamily []personFamily
+}
+
+type personFamily struct {
 	ID        string
-	Name      personName
-	Aliases   []personName
-	LastNames []string
-	Sex       string
-	Sources   []sourceRef
+	Pedigree  string
+	AdoptedBy string
+	Mother    personRef
+	Father    personRef
+	Children  []personRef
 }
 
 type personIndex map[string]*individual
@@ -23,6 +33,11 @@ type personName struct {
 	Last       string
 	LastFirst  string
 	SourcesInd []int
+}
+
+type personRef struct {
+	ID   string
+	Name string
 }
 
 type sourceData struct {

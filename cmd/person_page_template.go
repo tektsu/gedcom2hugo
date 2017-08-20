@@ -10,7 +10,7 @@ import (
 
 const personPageTemplate string = `---
 title: "{{ .Name.Full }}"
-url: "/{{ .ID }}/"
+url: "/{{ .ID | ToLower }}/"
 categories:
   - Person
 {{ if .LastNames }}lastnames:
@@ -33,10 +33,44 @@ name:
   {{ end }}
 {{- end }}
 ---
-{{ "personbody" | shortcode }}
+
+
+<div id="person">
+
+<div id="personal_info">
+<table class="personal_info_table">
+<tr><th>Name</th><td>{{ .Name.Full }}{{ if .Name.SourcesInd }}<sup>{{ range .Name.SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}</td></tr>
+<tr><th>Sex</th><td>{{ .Sex }}</td></tr>
+</table>
+</div>
+
+{{ if .ParentsFamily }}
+<div id="parents">
+{{ range .ParentsFamily}}
+<table class="parents_family">
+<tr><th colspan="2">Parent's Family</th></tr>
+<tr><th>Father</th><td>{{ if .Father.ID }}<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>{{ end }}<br /></td></tr>
+<tr><th>Mother</th><td>{{ if .Mother.ID }}<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>{{ end }}<br /></td></tr>
+</table>
+{{ end }}
+</div>
+{{ end }}
+
+{{ if .Sources -}}
+<div id="sources">
+<table class="sources_table">
+<tr><th colspan="2">Sources</th></tr>
+{{ range $i, $s := .Sources -}}
+<tr><td>{{ add $i 1 }}.</td><td><a href="/s{{ $s.RefNum }}">{{ $s.Ref }}</a></td></tr>
+{{ end -}}
+</table>
+</div>
+{{- end }}
+
+</div>
 `
 
-func newPersonData(cx *cli.Context, people *personIndex, person *gedcom.IndividualRecord) (personData, error) {
+func newPersonData(cx *cli.Context, people personIndex, person *gedcom.IndividualRecord) (personData, error) {
 
 	cc := 0 // Citation Counter
 
@@ -79,6 +113,26 @@ func newPersonData(cx *cli.Context, people *personIndex, person *gedcom.Individu
 		data.LastNames = make([]string, 0, len(lastNames))
 		for l := range lastNames {
 			data.LastNames = append(data.LastNames, l)
+		}
+	}
+
+	for _, fr := range person.Parents {
+		if fr.Family != nil {
+			f := personFamily{
+				ID:        fr.Family.Xref,
+				Pedigree:  fr.Pedigree,
+				AdoptedBy: fr.AdoptedBy,
+			}
+			if fr.Family.Husband != nil {
+				f.Father.ID = fr.Family.Husband.Xref
+				f.Father.Name = people[fr.Family.Husband.Xref].FullName
+			}
+			if fr.Family.Wife != nil {
+				f.Mother.ID = fr.Family.Wife.Xref
+				f.Mother.Name = people[fr.Family.Wife.Xref].FullName
+			}
+
+			data.ParentsFamily = append(data.ParentsFamily, f)
 		}
 	}
 

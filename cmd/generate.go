@@ -101,7 +101,11 @@ func Generate(cx *cli.Context) error {
 		}
 
 		tpl := template.New("person")
-		funcs := template.FuncMap{"add": add, "shortcode": shortcode}
+		funcs := template.FuncMap{
+			"add":       add,
+			"shortcode": shortcode,
+			"ToLower":   strings.ToLower,
+		}
 		tpl.Funcs(funcs)
 		tpl, err = tpl.Parse(personPageTemplate)
 		if err != nil {
@@ -154,7 +158,7 @@ func (l indSortableList) Less(i, j int) bool { return l[i].Name < l[j].Name }
 func (l indSortableList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 
 // individualIndex creates a map information about individuals keyed to Individual ID.
-func createPersonIndex(cx *cli.Context, gc *gedcom.Gedcom) (*personIndex, error) {
+func createPersonIndex(cx *cli.Context, gc *gedcom.Gedcom) (personIndex, error) {
 	index := make(personIndex)
 
 	//Build the index.
@@ -187,7 +191,7 @@ func createPersonIndex(cx *cli.Context, gc *gedcom.Gedcom) (*personIndex, error)
 		weight++
 	}
 
-	return &index, nil
+	return index, nil
 }
 
 // extractNames splits a full name into a given name and a family name.
