@@ -36,8 +36,9 @@ type personName struct {
 }
 
 type personRef struct {
-	ID   string
-	Name string
+	ID         string
+	Name       string
+	SourcesInd []int
 }
 
 type sourceData struct {

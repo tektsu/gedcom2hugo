@@ -49,8 +49,22 @@ name:
 {{ range .ParentsFamily}}
 <table class="parents_family">
 <tr><th colspan="2">Parent's Family</th></tr>
-<tr><th>Father</th><td>{{ if .Father.ID }}<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>{{ end }}<br /></td></tr>
-<tr><th>Mother</th><td>{{ if .Mother.ID }}<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>{{ end }}<br /></td></tr>
+<tr><th>Father</th><td>
+	{{- if .Father.ID -}}
+		<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
+		{{- if .Father.SourcesInd -}}
+			<sup>{{ range .Father.SourcesInd }} [{{ . }}]{{ end }}</sup>
+		{{- end -}}
+	{{- end -}}<br />
+</td></tr>
+<tr><th>Mother</th><td>
+	{{- if .Mother.ID -}}
+		<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
+		{{- if .Mother.SourcesInd -}}
+			<sup>{{ range .Mother.SourcesInd }} [{{ . }}]{{ end }}</sup>
+		{{- end -}}
+	{{- end -}}<br />
+</td></tr>
 </table>
 {{ end }}
 </div>
@@ -126,10 +140,36 @@ func newPersonData(cx *cli.Context, people personIndex, person *gedcom.Individua
 			if fr.Family.Husband != nil {
 				f.Father.ID = fr.Family.Husband.Xref
 				f.Father.Name = people[fr.Family.Husband.Xref].FullName
+				for _, c := range fr.Family.Husband.Name[0].Citation {
+					r, err := strconv.Atoi(c.Source.Xref[1:len(c.Source.Xref)])
+					if err != nil {
+						panic(err)
+					}
+					cc++
+
+					f.Father.SourcesInd = append(f.Father.SourcesInd, cc)
+					data.Sources = append(data.Sources, sourceRef{
+						RefNum: r,
+						Ref:    sl[r],
+					})
+				}
 			}
 			if fr.Family.Wife != nil {
 				f.Mother.ID = fr.Family.Wife.Xref
 				f.Mother.Name = people[fr.Family.Wife.Xref].FullName
+				for _, c := range fr.Family.Wife.Name[0].Citation {
+					r, err := strconv.Atoi(c.Source.Xref[1:len(c.Source.Xref)])
+					if err != nil {
+						panic(err)
+					}
+					cc++
+
+					f.Mother.SourcesInd = append(f.Mother.SourcesInd, cc)
+					data.Sources = append(data.Sources, sourceRef{
+						RefNum: r,
+						Ref:    sl[r],
+					})
+				}
 			}
 
 			data.ParentsFamily = append(data.ParentsFamily, f)
