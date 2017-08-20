@@ -39,6 +39,7 @@ type personName struct {
 type personRef struct {
 	ID         string
 	Name       string
+	Sex        string
 	SourcesInd []int
 }
 

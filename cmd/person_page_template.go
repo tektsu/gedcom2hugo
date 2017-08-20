@@ -54,7 +54,7 @@ categories:
 	<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
 	{{- if .SourcesInd -}}
 		<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
-	{{- end -}}<br />
+	{{- end -}} ({{ .Sex }})<br />
 {{ end }}
 </td></tr>
 {{ end }}
@@ -132,6 +132,7 @@ func newPersonData(cx *cli.Context, people personIndex, person *gedcom.Individua
 			}
 			if fr.Family.Husband != nil {
 				f.Father.ID = fr.Family.Husband.Xref
+				f.Father.Sex = fr.Family.Husband.Sex
 				f.Father.Name = people[fr.Family.Husband.Xref].FullName
 				for _, c := range fr.Family.Husband.Name[0].Citation {
 					r, err := strconv.Atoi(c.Source.Xref[1:len(c.Source.Xref)])
@@ -149,6 +150,7 @@ func newPersonData(cx *cli.Context, people personIndex, person *gedcom.Individua
 			}
 			if fr.Family.Wife != nil {
 				f.Mother.ID = fr.Family.Wife.Xref
+				f.Mother.Sex = fr.Family.Wife.Sex
 				f.Mother.Name = people[fr.Family.Wife.Xref].FullName
 				for _, c := range fr.Family.Wife.Name[0].Citation {
 					r, err := strconv.Atoi(c.Source.Xref[1:len(c.Source.Xref)])
@@ -170,6 +172,7 @@ func newPersonData(cx *cli.Context, people personIndex, person *gedcom.Individua
 				}
 				child := personRef{
 					ID:   cr.Xref,
+					Sex:  cr.Sex,
 					Name: people[cr.Xref].GivenName,
 				}
 				for _, c := range cr.Name[0].Citation {
