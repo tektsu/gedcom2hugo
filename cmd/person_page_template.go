@@ -16,22 +16,6 @@ categories:
 {{ if .LastNames }}lastnames:
   {{ range .LastNames }}- {{ . }}{{ end }}
 {{- end }}
-name:
-  full: "{{ .Name.Full }}"
-  last: "{{ .Name.Last }}"
-  lastfirst: "{{ .Name.LastFirst }}"
-  {{ if .Name.SourcesInd -}}
-  sources:
-  {{ range .Name.SourcesInd }}  - {{ . }}
-  {{ end }}
-  {{- end }}
-{{ if .Sex }}sex: "{{ .Sex }}"{{ end }}
-{{ if .Sources }}sources:
-  {{ range .Sources }}-
-    ref: {{ .Ref }}
-    refnum: {{ .RefNum }}
-  {{ end }}
-{{- end }}
 ---
 
 
