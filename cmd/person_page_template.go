@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/tektsu/gedcom"
-	"github.com/urfave/cli"
 )
 
 const personPageTemplate string = `---
@@ -77,40 +75,25 @@ categories:
 </div>
 `
 
-func newPersonData(cx *cli.Context, people personIndex, person *gedcom.IndividualRecord) (personData, error) {
+func newPersonTmplData(people personIndex, person *gedcom.IndividualRecord) *personTmplData {
 
 	cc := 0 // Citation Counter
 
 	id := person.Xref
-	data := personData{
+	data := &personTmplData{
 		ID:  id,
 		Sex: person.Sex,
 	}
 
-	lastNames := make(map[string]bool)
 	for i, n := range person.Name {
-		given, family := extractNames(n.Name)
-		lastNames[family] = true
-		name := personName{
-			Last:      family,
-			Full:      fmt.Sprintf("%s %s", given, family),
-			LastFirst: fmt.Sprintf("%s, %s", family, given),
-		}
+		lastNames := make(map[string]bool)
 
-		for _, c := range n.Citation {
-			r, err := strconv.Atoi(c.Source.Xref[1:len(c.Source.Xref)])
-			if err != nil {
-				panic(err)
-			}
-			cc++
-			name.SourcesInd = append(name.SourcesInd, cc)
-			ref := sl[r]
-			data.Sources = append(data.Sources, sourceRef{
-				RefNum: r,
-				Ref:    ref,
-			})
-
+		name := newPersonName(n)
+		citations := name.citations(&cc, n.Citation)
+		for _, c := range citations {
+			data.Sources = append(data.Sources, c)
 		}
+		lastNames[name.Last] = true
 
 		if i == 0 {
 			data.Name = name
@@ -142,7 +125,7 @@ func newPersonData(cx *cli.Context, people personIndex, person *gedcom.Individua
 					cc++
 
 					f.Father.SourcesInd = append(f.Father.SourcesInd, cc)
-					data.Sources = append(data.Sources, sourceRef{
+					data.Sources = append(data.Sources, &sourceRef{
 						RefNum: r,
 						Ref:    sl[r],
 					})
@@ -160,7 +143,7 @@ func newPersonData(cx *cli.Context, people personIndex, person *gedcom.Individua
 					cc++
 
 					f.Mother.SourcesInd = append(f.Mother.SourcesInd, cc)
-					data.Sources = append(data.Sources, sourceRef{
+					data.Sources = append(data.Sources, &sourceRef{
 						RefNum: r,
 						Ref:    sl[r],
 					})
@@ -183,7 +166,7 @@ func newPersonData(cx *cli.Context, people personIndex, person *gedcom.Individua
 					cc++
 
 					child.SourcesInd = append(child.SourcesInd, cc)
-					data.Sources = append(data.Sources, sourceRef{
+					data.Sources = append(data.Sources, &sourceRef{
 						RefNum: r,
 						Ref:    sl[r],
 					})
@@ -195,5 +178,5 @@ func newPersonData(cx *cli.Context, people personIndex, person *gedcom.Individua
 		}
 	}
 
-	return data, nil
+	return data
 }

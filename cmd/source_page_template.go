@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/tektsu/gedcom"
-	"github.com/urfave/cli"
 )
 
 const sourcePageTemplate string = `---
@@ -68,119 +67,119 @@ title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
 {{ end }}
 `
 
-func newSourceData(cx *cli.Context, source *gedcom.SourceRecord) (sourceData, error) {
+func newSourceTmplData(s *gedcom.SourceRecord) *sourceTmplData {
 
-	data := sourceData{
-		ID:          source.Xref,
-		Author:      source.Author,
-		Title:       source.Title,
-		Abbr:        source.Abbr,
-		Publication: source.Publication,
-		Text:        source.Text,
-		Type:        source.Type,
-		File:        source.File,
-		FileNumber:  source.FileNumber,
-		Place:       source.Place,
-		Date:        source.Date,
-		DateViewed:  source.DateViewed,
-		URL:         source.URL,
-		DocLocation: source.DocLocation,
-		Periodical:  source.Periodical,
-		Volume:      source.Volume,
-		MediaType:   source.MediaType,
+	d := &sourceTmplData{
+		ID:          s.Xref,
+		Author:      s.Author,
+		Title:       s.Title,
+		Abbr:        s.Abbr,
+		Publication: s.Publication,
+		Text:        s.Text,
+		Type:        s.Type,
+		File:        s.File,
+		FileNumber:  s.FileNumber,
+		Place:       s.Place,
+		Date:        s.Date,
+		DateViewed:  s.DateViewed,
+		URL:         s.URL,
+		DocLocation: s.DocLocation,
+		Periodical:  s.Periodical,
+		Volume:      s.Volume,
+		MediaType:   s.MediaType,
 	}
 
-	// Build the reference string.
 	re := regexp.MustCompile("[0-9]+")
-	matches := re.FindAllString(source.Xref, 1)
-	data.Ref = fmt.Sprintf("%s. ", matches[0])
+	matches := re.FindAllString(s.Xref, 1)
+	d.Ref = fmt.Sprintf("%s. ", matches[0])
 	v, err := strconv.Atoi(matches[0])
 	if err != nil {
 		panic(fmt.Sprintf("Error converting [%s] to integer", matches[0]))
 	}
-	data.RefNum = v
+	d.RefNum = v
 
 	// Copy in the arrays
-	if len(source.File) > 0 {
-		data.File = make([]string, len(source.File))
-		copy(data.File, source.File)
+	if len(s.File) > 0 {
+		d.File = make([]string, len(s.File))
+		copy(d.File, s.File)
 	}
-	if len(source.FileNumber) > 0 {
-		data.FileNumber = make([]string, len(source.FileNumber))
-		copy(data.FileNumber, source.FileNumber)
+	if len(s.FileNumber) > 0 {
+		d.FileNumber = make([]string, len(s.FileNumber))
+		copy(d.FileNumber, s.FileNumber)
 	}
-	if len(source.Place) > 0 {
-		data.Place = make([]string, len(source.Place))
-		copy(data.Place, source.Place)
+	if len(s.Place) > 0 {
+		d.Place = make([]string, len(s.Place))
+		copy(d.Place, s.Place)
 	}
-	if len(source.Date) > 0 {
-		data.Date = make([]string, len(source.Date))
-		copy(data.Date, source.Date)
+	if len(s.Date) > 0 {
+		d.Date = make([]string, len(s.Date))
+		copy(d.Date, s.Date)
 	}
-	if len(source.DateViewed) > 0 {
-		data.DateViewed = make([]string, len(source.DateViewed))
-		copy(data.DateViewed, source.DateViewed)
+	if len(s.DateViewed) > 0 {
+		d.DateViewed = make([]string, len(s.DateViewed))
+		copy(d.DateViewed, s.DateViewed)
 	}
-	if len(source.URL) > 0 {
-		data.URL = make([]string, len(source.URL))
-		copy(data.URL, source.URL)
+	if len(s.URL) > 0 {
+		d.URL = make([]string, len(s.URL))
+		copy(d.URL, s.URL)
 	}
-	if len(source.DocLocation) > 0 {
-		data.DocLocation = make([]string, len(source.DocLocation))
-		copy(data.DocLocation, source.DocLocation)
+	if len(s.DocLocation) > 0 {
+		d.DocLocation = make([]string, len(s.DocLocation))
+		copy(d.DocLocation, s.DocLocation)
 	}
-	if len(source.Repository) > 0 {
-		data.Repository = make([]string, len(source.Repository))
-		copy(data.Repository, source.Repository)
+	if len(s.Repository) > 0 {
+		d.Repository = make([]string, len(s.Repository))
+		copy(d.Repository, s.Repository)
 	}
-	if len(source.Submitter) > 0 {
-		data.Submitter = make([]string, len(source.Submitter))
-		copy(data.Submitter, source.Submitter)
+	if len(s.Submitter) > 0 {
+		d.Submitter = make([]string, len(s.Submitter))
+		copy(d.Submitter, s.Submitter)
 	}
-	if len(source.Page) > 0 {
-		data.Page = make([]string, len(source.Page))
-		copy(data.Page, source.Page)
+	if len(s.Page) > 0 {
+		d.Page = make([]string, len(s.Page))
+		copy(d.Page, s.Page)
 	}
-	if len(source.Film) > 0 {
-		data.Film = make([]string, len(source.Film))
-		copy(data.Film, source.Film)
+	if len(s.Film) > 0 {
+		d.Film = make([]string, len(s.Film))
+		copy(d.Film, s.Film)
 	}
 
+	// Build the reference string.
 	var refs []string
-	if data.Author != "" {
-		refs = append(refs, data.Author)
+	if d.Author != "" {
+		refs = append(refs, d.Author)
 	}
-	if data.Title != "" {
-		refs = append(refs, fmt.Sprintf("\"%s\"", data.Title))
+	if d.Title != "" {
+		refs = append(refs, fmt.Sprintf("\"%s\"", d.Title))
 	}
-	if len(data.Date) > 0 {
-		refs = append(refs, data.Date[0])
+	if len(d.Date) > 0 {
+		refs = append(refs, d.Date[0])
 	}
-	if data.Periodical != "" {
-		refs = append(refs, fmt.Sprintf("%s", data.Periodical))
+	if d.Periodical != "" {
+		refs = append(refs, fmt.Sprintf("%s", d.Periodical))
 	}
-	if data.Volume != "" {
-		refs = append(refs, fmt.Sprintf("%s", data.Volume))
+	if d.Volume != "" {
+		refs = append(refs, fmt.Sprintf("%s", d.Volume))
 	}
-	if len(data.Page) > 0 {
-		refs = append(refs, fmt.Sprintf("p %s", data.Page[0]))
+	if len(d.Page) > 0 {
+		refs = append(refs, fmt.Sprintf("p %s", d.Page[0]))
 	}
-	if len(data.Film) > 0 {
-		refs = append(refs, data.Film[0])
+	if len(d.Film) > 0 {
+		refs = append(refs, d.Film[0])
 	}
-	if len(data.Place) > 0 {
-		refs = append(refs, data.Place[0])
+	if len(d.Place) > 0 {
+		refs = append(refs, d.Place[0])
 	}
-	if data.Type != "" {
-		refs = append(refs, data.Type)
+	if d.Type != "" {
+		refs = append(refs, d.Type)
 	}
-	if len(data.URL) > 0 {
-		refs = append(refs, fmt.Sprintf("[%s]", data.URL[0]))
+	if len(d.URL) > 0 {
+		refs = append(refs, fmt.Sprintf("[%s]", d.URL[0]))
 	}
-	if len(data.FileNumber) > 0 {
-		refs = append(refs, data.FileNumber[0])
+	if len(d.FileNumber) > 0 {
+		refs = append(refs, d.FileNumber[0])
 	}
-	data.Ref = strings.Join(refs, ", ")
+	d.Ref = strings.Join(refs, ", ")
 
-	return data, nil
+	return d
 }

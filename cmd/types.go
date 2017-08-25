@@ -1,20 +1,12 @@
 package cmd
 
-type individual struct {
-	AlphaWeight int64 // Weight of individual entry based on aphabetical order
-	GivenName,
-	FamilyName,
-	FullName,
-	LastNameFirst string // Names in different forms
-}
-
-type personData struct {
+type personTmplData struct {
 	ID            string
-	Name          personName
-	Aliases       []personName
+	Name          *personName
+	Aliases       []*personName
 	LastNames     []string
 	Sex           string
-	Sources       []sourceRef
+	Sources       []*sourceRef
 	ParentsFamily []personFamily
 }
 
@@ -27,15 +19,6 @@ type personFamily struct {
 	Children  []personRef
 }
 
-type personIndex map[string]*individual
-
-type personName struct {
-	Full       string
-	Last       string
-	LastFirst  string
-	SourcesInd []int
-}
-
 type personRef struct {
 	ID         string
 	Name       string
@@ -43,7 +26,7 @@ type personRef struct {
 	SourcesInd []int
 }
 
-type sourceData struct {
+type sourceTmplData struct {
 	ID          string
 	Author      string
 	Abbr        string
@@ -70,8 +53,3 @@ type sourceData struct {
 }
 
 type sourceList map[int]string
-
-type sourceRef struct {
-	RefNum int
-	Ref    string
-}

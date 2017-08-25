@@ -7,8 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
-	"sort"
 	"strings"
 	"text/template"
 
@@ -37,10 +35,7 @@ func Generate(cx *cli.Context) error {
 		return cli.NewExitError(err, 1)
 	}
 
-	people, err := createPersonIndex(cx, gc)
-	if err != nil {
-		return cli.NewExitError(err, 1)
-	}
+	people := newPersonIndex(gc)
 
 	// Generate Source Pages.
 	sl = make(sourceList)
@@ -59,10 +54,7 @@ func Generate(cx *cli.Context) error {
 		}
 		defer fh.Close()
 
-		data, err := newSourceData(cx, source)
-		if err != nil {
-			return cli.NewExitError(err, 1)
-		}
+		data := newSourceTmplData(source)
 		sl[data.RefNum] = data.Ref
 
 		tpl := template.New("source")
@@ -95,10 +87,7 @@ func Generate(cx *cli.Context) error {
 		}
 		defer fh.Close()
 
-		data, err := newPersonData(cx, people, person)
-		if err != nil {
-			return cli.NewExitError(err, 1)
-		}
+		data := newPersonTmplData(people, person)
 
 		tpl := template.New("person")
 		funcs := template.FuncMap{
@@ -145,64 +134,4 @@ func readGedcom(cx *cli.Context) (*gedcom.Gedcom, error) {
 		return gc, err
 	}
 	return gc, nil
-}
-
-type indSortable struct {
-	ID, Name string
-}
-
-type indSortableList []indSortable
-
-func (l indSortableList) Len() int           { return len(l) }
-func (l indSortableList) Less(i, j int) bool { return l[i].Name < l[j].Name }
-func (l indSortableList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
-
-// individualIndex creates a map information about individuals keyed to Individual ID.
-func createPersonIndex(cx *cli.Context, gc *gedcom.Gedcom) (personIndex, error) {
-	index := make(personIndex)
-
-	//Build the index.
-	for _, i := range gc.Individual {
-		index[i.Xref] = &individual{}
-
-		if len(i.Name) > 0 {
-			given, family := extractNames(i.Name[0].Name)
-			index[i.Xref].GivenName = given
-			index[i.Xref].FamilyName = family
-			index[i.Xref].FullName = fmt.Sprintf("%s %s", given, family)
-			index[i.Xref].LastNameFirst = fmt.Sprintf("%s, %s", family, given)
-		}
-	}
-
-	// Assign weights
-	l := make(indSortableList, len(index))
-	i := 0
-	for id, ind := range index {
-		l[i] = indSortable{
-			ID:   id,
-			Name: ind.LastNameFirst,
-		}
-		i++
-	}
-	sort.Sort(l)
-
-	var weight int64 = 1
-	for _, entry := range l {
-		index[entry.ID].AlphaWeight = weight
-		weight++
-	}
-
-	return index, nil
-}
-
-// extractNames splits a full name into a given name and a family name.
-func extractNames(name string) (string, string) {
-	var given, family string
-
-	re := regexp.MustCompile("^([^/]+) +/(.+)/$")
-	names := re.FindStringSubmatch(name)
-	given = names[1]
-	family = names[2]
-
-	return given, family
 }
