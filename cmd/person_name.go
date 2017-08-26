@@ -25,14 +25,12 @@ func newPersonName(n *gedcom.NameRecord) *personName {
 	return r
 }
 
-func (r *personName) citations(cc *int, citations []*gedcom.CitationRecord) []*sourceRef {
+func (r *personName) citations(cc int, c []*gedcom.CitationRecord) (int, []*sourceRef) {
 
-	var refs []*sourceRef
-	for _, c := range citations {
-		*cc++
-		r.SourcesInd = append(r.SourcesInd, *cc)
-		refs = append(refs, newSourceRefFromCitation(c))
+	sources := sourcesFromCitations(c)
+	for _ = range sources {
+		cc++
+		r.SourcesInd = append(r.SourcesInd, cc)
 	}
-
-	return refs
+	return cc, sources
 }

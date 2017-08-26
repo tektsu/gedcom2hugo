@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"strconv"
-
 	"github.com/tektsu/gedcom"
 )
 
@@ -75,9 +73,20 @@ categories:
 </div>
 `
 
-func newPersonTmplData(people personIndex, person *gedcom.IndividualRecord) *personTmplData {
+type personTmplData struct {
+	ID            string
+	Name          *personName
+	Aliases       []*personName
+	LastNames     []string
+	Sex           string
+	Sources       []*sourceRef
+	ParentsFamily []*personFamily
+}
+
+func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 
 	cc := 0 // Citation Counter
+	var sources []*sourceRef
 
 	id := person.Xref
 	data := &personTmplData{
@@ -89,9 +98,9 @@ func newPersonTmplData(people personIndex, person *gedcom.IndividualRecord) *per
 		lastNames := make(map[string]bool)
 
 		name := newPersonName(n)
-		citations := name.citations(&cc, n.Citation)
-		for _, c := range citations {
-			data.Sources = append(data.Sources, c)
+		cc, sources = name.citations(cc, n.Citation)
+		for _, s := range sources {
+			data.Sources = append(data.Sources, s)
 		}
 		lastNames[name.Last] = true
 
@@ -108,72 +117,12 @@ func newPersonTmplData(people personIndex, person *gedcom.IndividualRecord) *per
 
 	for _, fr := range person.Parents {
 		if fr.Family != nil {
-			f := personFamily{
-				ID:        fr.Family.Xref,
-				Pedigree:  fr.Pedigree,
-				AdoptedBy: fr.AdoptedBy,
+			var sources []*sourceRef
+			f := newPersonFamily(fr)
+			cc, sources = f.processParents(cc, fr.Family)
+			for _, s := range sources {
+				data.Sources = append(data.Sources, s)
 			}
-			if fr.Family.Husband != nil {
-				f.Father.ID = fr.Family.Husband.Xref
-				f.Father.Sex = fr.Family.Husband.Sex
-				f.Father.Name = people[fr.Family.Husband.Xref].FullName
-				for _, c := range fr.Family.Husband.Name[0].Citation {
-					r, err := strconv.Atoi(c.Source.Xref[1:len(c.Source.Xref)])
-					if err != nil {
-						panic(err)
-					}
-					cc++
-
-					f.Father.SourcesInd = append(f.Father.SourcesInd, cc)
-					data.Sources = append(data.Sources, &sourceRef{
-						RefNum: r,
-						Ref:    sl[r],
-					})
-				}
-			}
-			if fr.Family.Wife != nil {
-				f.Mother.ID = fr.Family.Wife.Xref
-				f.Mother.Sex = fr.Family.Wife.Sex
-				f.Mother.Name = people[fr.Family.Wife.Xref].FullName
-				for _, c := range fr.Family.Wife.Name[0].Citation {
-					r, err := strconv.Atoi(c.Source.Xref[1:len(c.Source.Xref)])
-					if err != nil {
-						panic(err)
-					}
-					cc++
-
-					f.Mother.SourcesInd = append(f.Mother.SourcesInd, cc)
-					data.Sources = append(data.Sources, &sourceRef{
-						RefNum: r,
-						Ref:    sl[r],
-					})
-				}
-			}
-			for _, cr := range fr.Family.Child {
-				if cr.Xref == data.ID {
-					continue
-				}
-				child := personRef{
-					ID:   cr.Xref,
-					Sex:  cr.Sex,
-					Name: people[cr.Xref].GivenName,
-				}
-				for _, c := range cr.Name[0].Citation {
-					r, err := strconv.Atoi(c.Source.Xref[1:len(c.Source.Xref)])
-					if err != nil {
-						panic(err)
-					}
-					cc++
-
-					child.SourcesInd = append(child.SourcesInd, cc)
-					data.Sources = append(data.Sources, &sourceRef{
-						RefNum: r,
-						Ref:    sl[r],
-					})
-				}
-				f.Children = append(f.Children, child)
-			}
-
 			data.ParentsFamily = append(data.ParentsFamily, f)
 		}
 	}

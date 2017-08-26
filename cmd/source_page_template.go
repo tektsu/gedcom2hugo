@@ -67,6 +67,32 @@ title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
 {{ end }}
 `
 
+type sourceTmplData struct {
+	ID          string
+	Author      string
+	Abbr        string
+	Publication string
+	Text        string
+	Title       string
+	Type        string
+	File        []string
+	FileNumber  []string
+	Place       []string
+	Date        []string
+	DateViewed  []string
+	URL         []string
+	DocLocation []string
+	RefNum      int
+	Ref         string
+	Periodical  string
+	Volume      string
+	MediaType   string
+	Repository  []string
+	Submitter   []string
+	Page        []string
+	Film        []string
+}
+
 func newSourceTmplData(s *gedcom.SourceRecord) *sourceTmplData {
 
 	d := &sourceTmplData{

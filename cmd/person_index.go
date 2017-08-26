@@ -8,7 +8,7 @@ import (
 	"github.com/tektsu/gedcom"
 )
 
-type personIndexEnty struct {
+type personIndexEntry struct {
 	AlphaWeight int64 // Weight of index entry based on aphabetical order
 	GivenName,
 	FamilyName,
@@ -16,10 +16,10 @@ type personIndexEnty struct {
 	LastNameFirst string // Names in different forms
 }
 
-type personIndex map[string]*personIndexEnty
+type personIndex map[string]*personIndexEntry
 
-func newIndividual(i *gedcom.IndividualRecord) *personIndexEnty {
-	r := &personIndexEnty{}
+func newIndividual(i *gedcom.IndividualRecord) *personIndexEntry {
+	r := &personIndexEntry{}
 
 	if len(i.Name) > 0 {
 		given, family := extractNames(i.Name[0].Name)

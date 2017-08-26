@@ -15,7 +15,10 @@ import (
 	"github.com/urfave/cli"
 )
 
+type sourceList map[int]string
+
 var sl sourceList
+var people personIndex
 
 func add(x, y int) int {
 	return x + y
@@ -35,7 +38,7 @@ func Generate(cx *cli.Context) error {
 		return cli.NewExitError(err, 1)
 	}
 
-	people := newPersonIndex(gc)
+	people = newPersonIndex(gc)
 
 	// Generate Source Pages.
 	sl = make(sourceList)
@@ -87,7 +90,7 @@ func Generate(cx *cli.Context) error {
 		}
 		defer fh.Close()
 
-		data := newPersonTmplData(people, person)
+		data := newPersonTmplData(person)
 
 		tpl := template.New("person")
 		funcs := template.FuncMap{
