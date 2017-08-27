@@ -85,8 +85,7 @@ type personTmplData struct {
 
 func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 
-	cc := 0 // Citation Counter
-	var sources []*sourceRef
+	count := 0 // Citation Counter
 
 	id := person.Xref
 	data := &personTmplData{
@@ -95,12 +94,13 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 	}
 
 	for i, n := range person.Name {
-		lastNames := make(map[string]bool)
+		var s []*sourceRef
+		var name *personName
 
-		name := newPersonName(n)
-		cc, sources = name.citations(cc, n.Citation)
-		for _, s := range sources {
-			data.Sources = append(data.Sources, s)
+		lastNames := make(map[string]bool)
+		count, s, name = newPersonNameWithCitations(count, n)
+		for _, source := range s {
+			data.Sources = append(data.Sources, source)
 		}
 		lastNames[name.Last] = true
 
@@ -118,8 +118,9 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 	for _, fr := range person.Parents {
 		if fr.Family != nil {
 			var sources []*sourceRef
-			f := newPersonFamily(fr)
-			cc, sources = f.processParents(cc, fr.Family)
+			var f *personFamily
+
+			count, sources, f = newPersonFamily(count, fr)
 			for _, s := range sources {
 				data.Sources = append(data.Sources, s)
 			}

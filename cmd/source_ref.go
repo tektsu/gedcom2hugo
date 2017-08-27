@@ -15,7 +15,7 @@ type sourceRef struct {
 	Ref    string
 }
 
-// newSourceRef build a sourceRef from a gedcom.SourceRecord.
+// newSourceRef builds a sourceRef from a gedcom.SourceRecord.
 // A poorly-formed Gedcam file can produce a panic.
 func newSourceRef(s *gedcom.SourceRecord) *sourceRef {
 	refNum, err := strconv.Atoi(s.Xref[1:len(s.Xref)])
@@ -29,9 +29,9 @@ func newSourceRef(s *gedcom.SourceRecord) *sourceRef {
 	}
 }
 
-// newSourceRefFromCitation build a sourceRef from a gedcom.CitationRecord.
+// newSourceRefFromCitation builds a sourceRef from a gedcom.CitationRecord.
 // A poorly-formed Gedcam file can produce a panic.
 func newSourceRefFromCitation(c *gedcom.CitationRecord) *sourceRef {
-	r := newSourceRef(c.Source)
-	return r
+	source := newSourceRef(c.Source)
+	return source
 }

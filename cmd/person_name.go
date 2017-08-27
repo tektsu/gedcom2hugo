@@ -16,21 +16,35 @@ type personName struct {
 func newPersonName(n *gedcom.NameRecord) *personName {
 
 	given, family := extractNames(n.Name)
-	r := &personName{
+	name := &personName{
 		Last:      family,
 		Full:      fmt.Sprintf("%s %s", given, family),
 		LastFirst: fmt.Sprintf("%s, %s", family, given),
 	}
 
-	return r
+	return name
 }
 
-func (r *personName) citations(cc int, c []*gedcom.CitationRecord) (int, []*sourceRef) {
+func newPersonNameWithCitations(count int, n *gedcom.NameRecord) (int, []*sourceRef, *personName) {
+	var sources []*sourceRef
+
+	name := newPersonName(n)
+
+	sources = sourcesFromCitations(n.Citation)
+	for _ = range sources {
+		count++
+		name.SourcesInd = append(name.SourcesInd, count)
+	}
+
+	return count, sources, name
+}
+
+func (name *personName) citations(count int, c []*gedcom.CitationRecord) (int, []*sourceRef) {
 
 	sources := sourcesFromCitations(c)
 	for _ = range sources {
-		cc++
-		r.SourcesInd = append(r.SourcesInd, cc)
+		count++
+		name.SourcesInd = append(name.SourcesInd, count)
 	}
-	return cc, sources
+	return count, sources
 }

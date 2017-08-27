@@ -2,6 +2,11 @@ package cmd
 
 import "github.com/tektsu/gedcom"
 
+// personFamily describes a person's family, either their own or their
+// parents.
+// ID is the Gedcom family Xref.
+// Mother, Father and Children are personRefs representing the members
+// of the family.
 type personFamily struct {
 	ID        string
 	Pedigree  string
@@ -11,48 +16,40 @@ type personFamily struct {
 	Children  []*personRef
 }
 
-func newPersonFamily(flr *gedcom.FamilyLinkRecord) *personFamily {
-	f := &personFamily{
+// newPersonFamily builds a personFamily record from a
+// gedcom.FamilyLinkRecord.
+// It is passed the local citation counter, and returns the new citation
+// counter value, an array of source summaries, and a new peersonFamily record.
+func newPersonFamily(count int, flr *gedcom.FamilyLinkRecord) (int, []*sourceRef, *personFamily) {
+	var sources []*sourceRef
+
+	if flr.Family == nil {
+		return count, sources, nil
+	}
+
+	family := &personFamily{
 		ID:        flr.Family.Xref,
 		Pedigree:  flr.Pedigree,
 		AdoptedBy: flr.AdoptedBy,
 	}
 
-	return f
-}
+	createPersonRef := func(c int, i *gedcom.IndividualRecord) (int, *personRef) {
 
-func (r *personFamily) processParents(cc int, fr *gedcom.FamilyRecord) (int, []*sourceRef) {
-	var sources []*sourceRef
-	var tmpSrc []*sourceRef
-
-	if fr == nil {
-		return cc, sources
-	}
-
-	if fr.Husband != nil {
-		r.Father = newPersonRef(fr.Husband)
-		cc, tmpSrc = r.Father.citations(cc, fr.Husband.Name[0].Citation)
-		for _, s := range tmpSrc {
-			sources = append(sources, s)
+		c, s, person := newPersonRefWithCitations(count, i)
+		for _, source := range s {
+			sources = append(sources, source)
 		}
+
+		return c, person
 	}
 
-	if fr.Wife != nil {
-		r.Mother = newPersonRef(fr.Wife)
-		cc, tmpSrc = r.Mother.citations(cc, fr.Wife.Name[0].Citation)
-		for _, s := range tmpSrc {
-			sources = append(sources, s)
-		}
+	count, family.Father = createPersonRef(count, flr.Family.Husband)
+	count, family.Mother = createPersonRef(count, flr.Family.Wife)
+	for _, i := range flr.Family.Child {
+		var child *personRef
+		count, child = createPersonRef(count, i)
+		family.Children = append(family.Children, child)
 	}
 
-	for _, cr := range fr.Child {
-		child := newPersonRef(cr)
-		cc, tmpSrc = child.citations(cc, cr.Name[0].Citation)
-		for _, s := range tmpSrc {
-			sources = append(sources, s)
-		}
-		r.Children = append(r.Children, child)
-	}
-
-	return cc, sources
+	return count, sources, family
 }
