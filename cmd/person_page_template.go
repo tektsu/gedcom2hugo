@@ -4,6 +4,7 @@ import (
 	"github.com/tektsu/gedcom"
 )
 
+// personPageTemplate is the template used to build a person web page.
 const personPageTemplate string = `---
 title: "{{ .Name.Full }}"
 url: "/{{ .ID | ToLower }}/"
@@ -73,6 +74,7 @@ categories:
 </div>
 `
 
+// personTmplData is the structure that is sent to the personPageTemplate for display.
 type personTmplData struct {
 	ID            string
 	Name          *personName
@@ -83,11 +85,15 @@ type personTmplData struct {
 	ParentsFamily []*personFamily
 }
 
+// sourceCB is the type of the callback function passed to various methods to
+// handle source references.
 type sourceCB func(s []*sourceRef) []int
 
+// newPersonTmplData builds a personTmplData structure from a
+// gedcom.IndividualRecord.
 func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 
-	count := 0 // Citation Counter
+	count := 0 // Local citation counter
 
 	id := person.Xref
 	data := &personTmplData{
@@ -95,6 +101,9 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		Sex: person.Sex,
 	}
 
+	// appendSources is the callback method send to any function which might
+	// produce sources. It accumulates any sources in the personTmplData
+	// structure and returns to the caller a list of local source references.
 	appendSources := func(s []*sourceRef) []int {
 		var localRefs []int
 
@@ -107,6 +116,7 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		return localRefs
 	}
 
+	// Add in the person's names.
 	for i, n := range person.Name {
 
 		lastNames := make(map[string]bool)
@@ -124,6 +134,7 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		}
 	}
 
+	// Add in the person's parents.
 	for _, fr := range person.Parents {
 		if fr.Family != nil {
 			family := newPersonFamily(fr, appendSources)

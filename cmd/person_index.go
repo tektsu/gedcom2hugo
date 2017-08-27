@@ -8,17 +8,23 @@ import (
 	"github.com/tektsu/gedcom"
 )
 
+// personIndex is a cache of information about each individual/
+type personIndex map[string]*personIndexEntry
+
+// personIndexEntry contains cached information about a person.
+// It lists names in various forms, and calculates a weight based on
+// alphabetical order of the names.
 type personIndexEntry struct {
-	AlphaWeight int64 // Weight of index entry based on aphabetical order
+	AlphaWeight int64
 	GivenName,
 	FamilyName,
 	FullName,
-	LastNameFirst string // Names in different forms
+	LastNameFirst string
 }
 
-type personIndex map[string]*personIndexEntry
-
-func newIndividual(i *gedcom.IndividualRecord) *personIndexEntry {
+// newPersonIndexEntry builds a personIndexEntry from a
+// gedcom.IndividualRecord.
+func newPersonIndexEntry(i *gedcom.IndividualRecord) *personIndexEntry {
 	r := &personIndexEntry{}
 
 	if len(i.Name) > 0 {
@@ -32,22 +38,24 @@ func newIndividual(i *gedcom.IndividualRecord) *personIndexEntry {
 	return r
 }
 
-type indSortable struct {
-	ID, Name string
-}
-
+// indSortableList is a sortable list used to alphabetize the personIndex.
 type indSortableList []indSortable
 
 func (l indSortableList) Len() int           { return len(l) }
 func (l indSortableList) Less(i, j int) bool { return l[i].Name < l[j].Name }
 func (l indSortableList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 
+type indSortable struct {
+	ID, Name string
+}
+
+// newPersonIndex builds a personIndex from a gedcom.Gedcom.
 func newPersonIndex(gc *gedcom.Gedcom) personIndex {
 	idx := make(personIndex)
 
 	//Build the index.
 	for _, i := range gc.Individual {
-		idx[i.Xref] = newIndividual(i)
+		idx[i.Xref] = newPersonIndexEntry(i)
 	}
 
 	// Assign the weights.

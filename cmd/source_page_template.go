@@ -9,6 +9,7 @@ import (
 	"github.com/tektsu/gedcom"
 )
 
+// sourcePageTemplate is the tmplate used to generaate a source web page.
 const sourcePageTemplate string = `---
 url: "/{{ .ID }}/"
 categories:
@@ -67,6 +68,7 @@ title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
 {{ end }}
 `
 
+// sourceTmplData is the data sent to the sourcePageTemplate for display.
 type sourceTmplData struct {
 	ID          string
 	Author      string
@@ -93,6 +95,8 @@ type sourceTmplData struct {
 	Film        []string
 }
 
+// newSourceTmplData builds a sourceTmplData structure from a
+// gedcom.SourceRecord.
 func newSourceTmplData(s *gedcom.SourceRecord) *sourceTmplData {
 
 	d := &sourceTmplData{

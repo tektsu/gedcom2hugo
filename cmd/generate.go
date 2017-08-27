@@ -15,15 +15,19 @@ import (
 	"github.com/urfave/cli"
 )
 
-type sourceList map[int]string
+// sourceIndex is a cache of information about each source
+type sourceIndex map[int]string
 
-var sl sourceList
+// Global caches
+var sources sourceIndex
 var people personIndex
 
+// add adds two numbers.
 func add(x, y int) int {
 	return x + y
 }
 
+// shortcode generates a shortcode tag.
 func shortcode(c string) string {
 	return fmt.Sprintf("{{< %s >}}", c)
 }
@@ -41,7 +45,7 @@ func Generate(cx *cli.Context) error {
 	people = newPersonIndex(gc)
 
 	// Generate Source Pages.
-	sl = make(sourceList)
+	sources = make(sourceIndex)
 	sourceDir := filepath.Join(project, "content", "source")
 	err = os.MkdirAll(sourceDir, 0777)
 	if err != nil {
@@ -58,7 +62,7 @@ func Generate(cx *cli.Context) error {
 		defer fh.Close()
 
 		data := newSourceTmplData(source)
-		sl[data.RefNum] = data.Ref
+		sources[data.RefNum] = data.Ref
 
 		tpl := template.New("source")
 		funcs := template.FuncMap{"shortcode": shortcode}

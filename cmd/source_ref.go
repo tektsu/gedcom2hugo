@@ -25,12 +25,12 @@ func newSourceRef(s *gedcom.SourceRecord) *sourceRef {
 
 	return &sourceRef{
 		RefNum: refNum,
-		Ref:    sl[refNum],
+		Ref:    sources[refNum],
 	}
 }
 
 // newSourceRefFromCitation builds a sourceRef from a gedcom.CitationRecord.
-// A poorly-formed Gedcam file can produce a panic.
+// A poorly-formed Gedcom file can produce a panic.
 func newSourceRefFromCitation(c *gedcom.CitationRecord) *sourceRef {
 	source := newSourceRef(c.Source)
 	return source
