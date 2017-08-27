@@ -93,15 +93,17 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		Sex: person.Sex,
 	}
 
-	for i, n := range person.Name {
-		var s []*sourceRef
-		var name *personName
-
-		lastNames := make(map[string]bool)
-		count, s, name = newPersonNameWithCitations(count, n)
+	appendSources := func(s []*sourceRef) {
 		for _, source := range s {
 			data.Sources = append(data.Sources, source)
 		}
+	}
+
+	for i, n := range person.Name {
+		var name *personName
+
+		lastNames := make(map[string]bool)
+		count, name = newPersonNameWithCitations(count, n, appendSources)
 		lastNames[name.Last] = true
 
 		if i == 0 {
@@ -117,14 +119,10 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 
 	for _, fr := range person.Parents {
 		if fr.Family != nil {
-			var sources []*sourceRef
-			var f *personFamily
+			var family *personFamily
 
-			count, sources, f = newPersonFamily(count, fr)
-			for _, s := range sources {
-				data.Sources = append(data.Sources, s)
-			}
-			data.ParentsFamily = append(data.ParentsFamily, f)
+			count, family = newPersonFamily(count, fr, appendSources)
+			data.ParentsFamily = append(data.ParentsFamily, family)
 		}
 	}
 

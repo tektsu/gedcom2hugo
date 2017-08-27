@@ -29,23 +29,23 @@ func newPersonRef(i *gedcom.IndividualRecord) *personRef {
 
 // newPersonRef builds person reference from a gedcom.IndividualRecord, adding
 // in citations from the name of the person.
-// In addition to the IndividualRecord, it is passed a local citiation counter.
-// It returns the new value of the citation counter, and array of reference
-// summaries, and a new personRef.
-func newPersonRefWithCitations(count int, i *gedcom.IndividualRecord) (int, []*sourceRef, *personRef) {
-	var sources []*sourceRef
+// In addition to the IndividualRecord, it is passed a local citation counter
+// and a callback function to handle source references.
+// It returns the new value of the citation counter and a new personRef.
+func newPersonRefWithCitations(count int, i *gedcom.IndividualRecord, cbSources func([]*sourceRef)) (int, *personRef) {
 
 	if i == nil {
-		return count, sources, nil
+		return count, nil
 	}
 
 	person := newPersonRef(i)
 
-	sources = sourcesFromCitations(i.Name[0].Citation)
+	sources := sourcesFromCitations(i.Name[0].Citation)
 	for _ = range sources {
 		count++
 		person.SourcesInd = append(person.SourcesInd, count)
 	}
 
-	return count, sources, person
+	cbSources(sources)
+	return count, person
 }
