@@ -19,8 +19,8 @@ categories:
 
 <div id="personal_info">
 <table class="personal_info_table">
-<tr><th>Name</th><td>{{ .Name.Full }}{{ if .Name.SourcesInd }}<sup>{{ range .Name.SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}</td></tr>
-<tr><th>Sex</th><td>{{ .Sex }}</td></tr>
+<tr><th>Name</th><td class="sex_{{ .Sex }}">{{ .Name.Full }}{{ if .Name.SourcesInd }}<sup>{{ range .Name.SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}</td></tr>
+<tr><th>Sex</th><td class="sex_{{ .Sex }}">{{ .Sex }}</td></tr>
 </table>
 </div>
 
@@ -29,7 +29,7 @@ categories:
 {{ range .ParentsFamily}}
 <table class="parents_family">
 <tr><th colspan="2">Parent's Family</th></tr>
-<tr><th>Father</th><td>
+<tr><th>Father</th><td class="sex_{{ .Father.Sex }}">
 	{{- if .Father.ID -}}
 		<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
 		{{- if .Father.SourcesInd -}}
@@ -37,7 +37,7 @@ categories:
 		{{- end -}}
 	{{- end -}}<br />
 </td></tr>
-<tr><th>Mother</th><td>
+<tr><th>Mother</th><td class="sex_{{ .Mother.Sex }}">
 	{{- if .Mother.ID -}}
 		<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
 		{{- if .Mother.SourcesInd -}}
@@ -48,10 +48,56 @@ categories:
 {{ $length := len .Children }} {{ if gt $length 0 }}
 <tr><th>Siblings</th><td>
 {{ range .Children }}
+	{{ if ne .ID $.ID }}
+	<div  class="sex_{{ .Sex }}">
 	<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
 	{{- if .SourcesInd -}}
 		<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
-	{{- end -}} ({{ .Sex }})<br />
+	{{- end -}}
+	</div><br />
+	{{ end }}
+{{ end }}
+</td></tr>
+{{ end }}
+</table>
+{{ end }}
+</div>
+{{ end }}
+
+{{ if .Family }}
+<div id="family">
+{{ range .Family}}
+<table class="family">
+<tr><th colspan="2">Family</th></tr>
+{{ if ne .Father.ID $.ID }}
+<tr><th>Spouse</th><td class="sex_{{ .Father.Sex }}">
+	{{- if .Father.ID -}}
+		<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
+		{{- if .Father.SourcesInd -}}
+			<sup>{{ range .Father.SourcesInd }} [{{ . }}]{{ end }}</sup>
+		{{- end -}}
+	{{- end -}}<br />
+</td></tr>
+{{ end }}
+{{ if ne .Mother.ID $.ID }}
+<tr><th>Spouse</th><td class="sex_{{ .Mother.Sex }}">
+	{{- if .Mother.ID -}}
+		<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
+		{{- if .Mother.SourcesInd -}}
+			<sup>{{ range .Mother.SourcesInd }} [{{ . }}]{{ end }}</sup>
+		{{- end -}}
+	{{- end -}}<br />
+</td></tr>
+{{ end }}
+{{ $length := len .Children }} {{ if gt $length 0 }}
+<tr><th>Children</th><td>
+{{ range .Children }}
+	<div  class="sex_{{ .Sex }}">
+	<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
+	{{- if .SourcesInd -}}
+		<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
+	{{- end -}}
+	</div><br />
 {{ end }}
 </td></tr>
 {{ end }}
@@ -83,6 +129,7 @@ type personTmplData struct {
 	Sex           string
 	Sources       []*sourceRef
 	ParentsFamily []*personFamily
+	Family        []*personFamily
 }
 
 // sourceCB is the type of the callback function passed to various methods to
@@ -142,6 +189,14 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		if fr.Family != nil {
 			family := newPersonFamily(fr, appendSources)
 			data.ParentsFamily = append(data.ParentsFamily, family)
+		}
+	}
+
+	// Add in the person's family.
+	for _, fr := range person.Family {
+		if fr.Family != nil {
+			family := newPersonFamily(fr, appendSources)
+			data.Family = append(data.Family, family)
 		}
 	}
 

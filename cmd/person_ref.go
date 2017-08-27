@@ -30,7 +30,7 @@ func newPersonRef(i *gedcom.IndividualRecord) *personRef {
 	return person
 }
 
-// newPersonRefwithCitations builds person reference from a
+// newPersonRefWithCitations builds person reference from a
 // gedcom.IndividualRecord, adding in citations from the name of the person.
 // In addition to the IndividualRecord, it is passed callback function to
 // handle source references.
