@@ -12,6 +12,7 @@ type personRef struct {
 	ID         string
 	Name       string
 	Sex        string
+	Living     bool
 	SourcesInd []int
 }
 
@@ -19,9 +20,10 @@ type personRef struct {
 func newPersonRef(i *gedcom.IndividualRecord) *personRef {
 
 	person := &personRef{
-		ID:   i.Xref,
-		Sex:  i.Sex,
-		Name: people[i.Xref].FullName,
+		ID:     i.Xref,
+		Sex:    i.Sex,
+		Name:   people[i.Xref].FullName,
+		Living: people[i.Xref].Living,
 	}
 	if person.Sex != "M" && person.Sex != "F" {
 		person.Sex = "U"

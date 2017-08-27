@@ -10,7 +10,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/tektsu/gedcom"
 	"github.com/urfave/cli"
 )
@@ -69,9 +68,11 @@ func Generate(cx *cli.Context) error {
 		return cli.NewExitError(err, 1)
 	}
 
-	spew.Config.MaxDepth = 5
 	for _, person := range gc.Individual {
 		id := person.Xref
+		if people[id].Living {
+			continue
+		}
 		//if id == "I126" {
 		//	fmt.Printf("%s\n", spew.Sdump(person))
 		//}

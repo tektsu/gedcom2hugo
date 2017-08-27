@@ -20,12 +20,13 @@ type personIndexEntry struct {
 	FamilyName,
 	FullName,
 	LastNameFirst string
+	Living bool
 }
 
 // newPersonIndexEntry builds a personIndexEntry from a
 // gedcom.IndividualRecord.
 func newPersonIndexEntry(i *gedcom.IndividualRecord) *personIndexEntry {
-	r := &personIndexEntry{}
+	r := &personIndexEntry{Living: false}
 
 	if len(i.Name) > 0 {
 		given, family := extractNames(i.Name[0].Name)
@@ -33,6 +34,9 @@ func newPersonIndexEntry(i *gedcom.IndividualRecord) *personIndexEntry {
 		r.FamilyName = family
 		r.FullName = fmt.Sprintf("%s %s", given, family)
 		r.LastNameFirst = fmt.Sprintf("%s, %s", family, given)
+		if given == "(Living)" {
+			r.Living = true
+		}
 	}
 
 	return r

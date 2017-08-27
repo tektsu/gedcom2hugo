@@ -31,30 +31,45 @@ categories:
 <tr><th colspan="2">Parent's Family</th></tr>
 <tr><th>Father</th><td class="sex_{{ .Father.Sex }}">
 	{{- if .Father.ID -}}
-		<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
-		{{- if .Father.SourcesInd -}}
-			<sup>{{ range .Father.SourcesInd }} [{{ . }}]{{ end }}</sup>
-		{{- end -}}
+		{{ if not .Father.Living }}
+			<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
+			{{- if .Father.SourcesInd -}}
+				<sup>{{ range .Father.SourcesInd }} [{{ . }}]{{ end }}</sup>
+			{{- end -}}
+		{{ end }}
+		{{ if .Father.Living }}
+			(Living)
+		{{ end }}
 	{{- end -}}<br />
 </td></tr>
 <tr><th>Mother</th><td class="sex_{{ .Mother.Sex }}">
 	{{- if .Mother.ID -}}
-		<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
-		{{- if .Mother.SourcesInd -}}
-			<sup>{{ range .Mother.SourcesInd }} [{{ . }}]{{ end }}</sup>
-		{{- end -}}
+		{{ if not .Mother.Living }}
+			<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
+			{{- if .Mother.SourcesInd -}}
+				<sup>{{ range .Mother.SourcesInd }} [{{ . }}]{{ end }}</sup>
+			{{- end -}}
+		{{ end }}
+		{{ if .Mother.Living }}
+			(Living)
+		{{ end }}
 	{{- end -}}<br />
 </td></tr>
 {{ $length := len .Children }} {{ if gt $length 0 }}
 <tr><th>Siblings</th><td>
 {{ range .Children }}
 	{{ if ne .ID $.ID }}
-	<div  class="sex_{{ .Sex }}">
-	<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
-	{{- if .SourcesInd -}}
-		<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
-	{{- end -}}
-	</div><br />
+		<div  class="sex_{{ .Sex }}">
+		{{ if not .Living }}
+			<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
+			{{- if .SourcesInd -}}
+				<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
+			{{- end -}}
+		{{ end }}
+		{{ if .Living }}
+			(Living)
+		{{ end }}
+		</div><br />
 	{{ end }}
 {{ end }}
 </td></tr>
@@ -72,20 +87,30 @@ categories:
 {{ if ne .Father.ID $.ID }}
 <tr><th>Spouse</th><td class="sex_{{ .Father.Sex }}">
 	{{- if .Father.ID -}}
-		<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
-		{{- if .Father.SourcesInd -}}
-			<sup>{{ range .Father.SourcesInd }} [{{ . }}]{{ end }}</sup>
-		{{- end -}}
+		{{ if not .Father.Living }}
+			<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
+			{{- if .Father.SourcesInd -}}
+				<sup>{{ range .Father.SourcesInd }} [{{ . }}]{{ end }}</sup>
+			{{- end -}}
+		{{ end }}
+		{{ if .Father.Living }}
+			(Living)
+		{{ end }}
 	{{- end -}}<br />
 </td></tr>
 {{ end }}
 {{ if ne .Mother.ID $.ID }}
 <tr><th>Spouse</th><td class="sex_{{ .Mother.Sex }}">
 	{{- if .Mother.ID -}}
-		<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
-		{{- if .Mother.SourcesInd -}}
-			<sup>{{ range .Mother.SourcesInd }} [{{ . }}]{{ end }}</sup>
-		{{- end -}}
+		{{ if not .Mother.Living }}
+			<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
+			{{- if .Mother.SourcesInd -}}
+				<sup>{{ range .Mother.SourcesInd }} [{{ . }}]{{ end }}</sup>
+			{{- end -}}
+		{{ end }}
+		{{ if .Mother.Living }}
+			(Living)
+		{{ end }}
 	{{- end -}}<br />
 </td></tr>
 {{ end }}
@@ -93,10 +118,15 @@ categories:
 <tr><th>Children</th><td>
 {{ range .Children }}
 	<div  class="sex_{{ .Sex }}">
-	<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
-	{{- if .SourcesInd -}}
-		<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
-	{{- end -}}
+	{{ if not .Living }}
+		<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
+		{{- if .SourcesInd -}}
+			<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
+		{{- end -}}
+	{{ end }}
+	{{ if .Living }}
+		(Living)
+	{{ end }}
 	</div><br />
 {{ end }}
 </td></tr>
@@ -127,6 +157,7 @@ type personTmplData struct {
 	Aliases       []*personName
 	LastNames     []string
 	Sex           string
+	Living        bool
 	Sources       []*sourceRef
 	ParentsFamily []*personFamily
 	Family        []*personFamily
@@ -144,8 +175,9 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 
 	id := person.Xref
 	data := &personTmplData{
-		ID:  id,
-		Sex: person.Sex,
+		ID:     id,
+		Sex:    person.Sex,
+		Living: people[person.Xref].Living,
 	}
 	if data.Sex != "M" && data.Sex != "F" {
 		data.Sex = "U"
