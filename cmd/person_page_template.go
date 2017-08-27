@@ -19,7 +19,7 @@ categories:
 
 <div id="personal_info">
 <table class="personal_info_table">
-<tr><th>Name</th><td class="sex_{{ .Sex }}">{{ .Name.Full }}{{ if .Name.SourcesInd }}<sup>{{ range .Name.SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}</td></tr>
+<tr><th>Name</th><td class="sex_{{ .Sex }}">{{ .Name.Full }}{{ if .Name.SourcesInd }}<sup>{{ range .Name.SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}{{ if .SourcesInd }}<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}</td></tr>
 <tr><th>Sex</th><td class="sex_{{ .Sex }}">{{ .Sex }}</td></tr>
 </table>
 </div>
@@ -161,6 +161,7 @@ type personTmplData struct {
 	Sources       []*sourceRef
 	ParentsFamily []*personFamily
 	Family        []*personFamily
+	SourcesInd    []int
 }
 
 // sourceCB is the type of the callback function passed to various methods to
@@ -197,6 +198,9 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 
 		return localRefs
 	}
+
+	// Get top-level citations
+	data.SourcesInd = appendSources(sourcesFromCitations(person.Citation))
 
 	// Add in the person's names.
 	for i, n := range person.Name {
