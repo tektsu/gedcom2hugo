@@ -36,7 +36,7 @@ func newPersonFamily(flr *gedcom.FamilyLinkRecord, handleSources sourceCB) *pers
 	family.Mother = newPersonRefWithCitations(flr.Family.Wife, handleSources)
 	for _, i := range flr.Family.Child {
 		var child *personRef
-		child = newPersonRefWithCitations(i, handleSources)
+		child = newPersonRefWithCitationsAsChild(i, handleSources)
 		family.Children = append(family.Children, child)
 	}
 

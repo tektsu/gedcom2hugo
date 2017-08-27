@@ -100,6 +100,9 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		ID:  id,
 		Sex: person.Sex,
 	}
+	if data.Sex != "M" && data.Sex != "F" {
+		data.Sex = "U"
+	}
 
 	// appendSources is the callback method send to any function which might
 	// produce sources. It accumulates any sources in the personTmplData
