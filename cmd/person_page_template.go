@@ -26,11 +26,11 @@ categories:
 
 {{ if .ParentsFamily }}
 <div id="parents">
-{{ range .ParentsFamily}}
+{{ range .ParentsFamily }}
 <table class="parents_family">
 <tr><th colspan="2">Parent's Family</th></tr>
-<tr><th>Father</th><td class="sex_{{ .Father.Sex }}">
-	{{- if .Father.ID -}}
+<tr><th>Father</th><td class="sex_M">
+	{{- if .Father -}}
 		{{ if not .Father.Living }}
 			<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
 			{{- if .Father.SourcesInd -}}
@@ -42,8 +42,8 @@ categories:
 		{{ end }}
 	{{- end -}}<br />
 </td></tr>
-<tr><th>Mother</th><td class="sex_{{ .Mother.Sex }}">
-	{{- if .Mother.ID -}}
+<tr><th>Mother</th><td class="sex_F">
+	{{- if .Mother -}}
 		{{ if not .Mother.Living }}
 			<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
 			{{- if .Mother.SourcesInd -}}
@@ -85,8 +85,8 @@ categories:
 <table class="family">
 <tr><th colspan="2">Family</th></tr>
 {{ if ne .Father.ID $.ID }}
-<tr><th>Spouse</th><td class="sex_{{ .Father.Sex }}">
-	{{- if .Father.ID -}}
+<tr><th>Spouse</th><td class="sex_M">
+	{{- if .Father -}}
 		{{ if not .Father.Living }}
 			<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
 			{{- if .Father.SourcesInd -}}
@@ -100,8 +100,8 @@ categories:
 </td></tr>
 {{ end }}
 {{ if ne .Mother.ID $.ID }}
-<tr><th>Spouse</th><td class="sex_{{ .Mother.Sex }}">
-	{{- if .Mother.ID -}}
+<tr><th>Spouse</th><td class="sex_F">
+	{{- if .Mother -}}
 		{{ if not .Mother.Living }}
 			<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
 			{{- if .Mother.SourcesInd -}}
