@@ -18,15 +18,12 @@ type personFamily struct {
 
 // newPersonFamily builds a personFamily record from a
 // gedcom.FamilyLinkRecord.
-// It is passed the local citation counter and a callback function to handle
-// source references.
-// It returns the new citation counter value, an array of source summaries,
-// and a new peersonFamily record.
-func newPersonFamily(count int, flr *gedcom.FamilyLinkRecord, cbSources func([]*sourceRef)) (int, *personFamily) {
-	var sources []*sourceRef
+// In addition to the FamilyLinkRecord, it is passed a callback function to
+// handle source references.
+func newPersonFamily(flr *gedcom.FamilyLinkRecord, handleSources sourceCB) *personFamily {
 
 	if flr.Family == nil {
-		return count, nil
+		return nil
 	}
 
 	family := &personFamily{
@@ -35,14 +32,13 @@ func newPersonFamily(count int, flr *gedcom.FamilyLinkRecord, cbSources func([]*
 		AdoptedBy: flr.AdoptedBy,
 	}
 
-	count, family.Father = newPersonRefWithCitations(count, flr.Family.Husband, cbSources)
-	count, family.Mother = newPersonRefWithCitations(count, flr.Family.Wife, cbSources)
+	family.Father = newPersonRefWithCitations(flr.Family.Husband, handleSources)
+	family.Mother = newPersonRefWithCitations(flr.Family.Wife, handleSources)
 	for _, i := range flr.Family.Child {
 		var child *personRef
-		count, child = newPersonRefWithCitations(count, i, cbSources)
+		child = newPersonRefWithCitations(i, handleSources)
 		family.Children = append(family.Children, child)
 	}
 
-	cbSources(sources)
-	return count, family
+	return family
 }

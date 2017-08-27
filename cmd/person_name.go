@@ -30,20 +30,12 @@ func newPersonName(n *gedcom.NameRecord) *personName {
 
 // newPersonNameWithCitations builds a personRef from a gedcom.NameRecord and
 // processes citations.
-// In addition to a NameRecord, it is passed a local citation counter
-// and a callback function to handle source references.
-// It returns the new value of the citation counter and a new personName.
-func newPersonNameWithCitations(count int, n *gedcom.NameRecord, cbSources func([]*sourceRef)) (int, *personName) {
-	var sources []*sourceRef
+// In addition to a NameRecord, it is passed a callback function to handle
+// source references.
+func newPersonNameWithCitations(n *gedcom.NameRecord, handleSources sourceCB) *personName {
 
 	name := newPersonName(n)
+	name.SourcesInd = handleSources(sourcesFromCitations(n.Citation))
 
-	sources = sourcesFromCitations(n.Citation)
-	for _ = range sources {
-		count++
-		name.SourcesInd = append(name.SourcesInd, count)
-	}
-	cbSources(sources)
-
-	return count, name
+	return name
 }

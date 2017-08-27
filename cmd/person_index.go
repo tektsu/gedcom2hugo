@@ -50,7 +50,7 @@ func newPersonIndex(gc *gedcom.Gedcom) personIndex {
 		idx[i.Xref] = newIndividual(i)
 	}
 
-	// Assign the weights
+	// Assign the weights.
 	l := make(indSortableList, len(idx))
 	i := 0
 	for id, ind := range idx {

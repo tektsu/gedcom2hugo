@@ -83,6 +83,8 @@ type personTmplData struct {
 	ParentsFamily []*personFamily
 }
 
+type sourceCB func(s []*sourceRef) []int
+
 func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 
 	count := 0 // Citation Counter
@@ -93,17 +95,22 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		Sex: person.Sex,
 	}
 
-	appendSources := func(s []*sourceRef) {
+	appendSources := func(s []*sourceRef) []int {
+		var localRefs []int
+
 		for _, source := range s {
 			data.Sources = append(data.Sources, source)
+			count++
+			localRefs = append(localRefs, count)
 		}
+
+		return localRefs
 	}
 
 	for i, n := range person.Name {
-		var name *personName
 
 		lastNames := make(map[string]bool)
-		count, name = newPersonNameWithCitations(count, n, appendSources)
+		name := newPersonNameWithCitations(n, appendSources)
 		lastNames[name.Last] = true
 
 		if i == 0 {
@@ -119,9 +126,7 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 
 	for _, fr := range person.Parents {
 		if fr.Family != nil {
-			var family *personFamily
-
-			count, family = newPersonFamily(count, fr, appendSources)
+			family := newPersonFamily(fr, appendSources)
 			data.ParentsFamily = append(data.ParentsFamily, family)
 		}
 	}
