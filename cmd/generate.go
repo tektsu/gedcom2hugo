@@ -22,16 +22,6 @@ type sourceIndex map[int]string
 var sources sourceIndex
 var people personIndex
 
-// add adds two numbers.
-func add(x, y int) int {
-	return x + y
-}
-
-// shortcode generates a shortcode tag.
-func shortcode(c string) string {
-	return fmt.Sprintf("{{< %s >}}", c)
-}
-
 // Generate reads the GEDCOM file and builds the Hugo input files.
 func Generate(cx *cli.Context) error {
 
@@ -65,8 +55,6 @@ func Generate(cx *cli.Context) error {
 		sources[data.RefNum] = data.Ref
 
 		tpl := template.New("source")
-		funcs := template.FuncMap{"shortcode": shortcode}
-		tpl.Funcs(funcs)
 		tpl, err = tpl.Parse(sourcePageTemplate)
 		if err != nil {
 			return cli.NewExitError(err, 1)
@@ -98,9 +86,8 @@ func Generate(cx *cli.Context) error {
 
 		tpl := template.New("person")
 		funcs := template.FuncMap{
-			"add":       add,
-			"shortcode": shortcode,
-			"ToLower":   strings.ToLower,
+			"add":     func(x, y int) int { return x + y },
+			"ToLower": strings.ToLower,
 		}
 		tpl.Funcs(funcs)
 		tpl, err = tpl.Parse(personPageTemplate)

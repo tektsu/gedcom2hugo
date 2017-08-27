@@ -14,52 +14,35 @@ const sourcePageTemplate string = `---
 url: "/{{ .ID }}/"
 categories:
   - Source
-{{ if .Type }}type: "{{ .Type }}"{{ end }}
-{{ if .Author }}author: "{{ .Author }}"{{ end }}
 title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
-{{ if .Abbr }}shorttitle: "{{ .Abbr }}"{{ end }}
-{{ if .Publication }}pubfacts: "{{ .Publication }}"{{ end }}
-{{ if .Periodical }}periodical: "{{ .Periodical }}"{{ end }}
-{{ if .Volume }}volume: "{{ .Volume }}"{{ end }}
-{{ if .MediaType }}mediatype: "{{ .MediaType }}"{{ end }}
-{{ if .Repository }}repository:
-{{ range .Repository }}  - "{{ . }}"
-{{ end }}{{ end }}
-{{ if .Submitter }}submitter:
-{{ range .Submitter }}  - "{{ . }}"
-{{ end }}{{ end }}
-{{ if .Page }}page:
-{{ range .Page }}  - "{{ . }}"
-{{ end }}{{ end }}
-{{ if .Film }}film:
-{{ range .Film }}  - "{{ . }}"
-{{ end }}{{ end }}
-{{ if .File }}file:
-{{ range .File }}  - "{{ . }}"
-{{ end }}{{ end }}
-{{ if .FileNumber }}filenumber:
-{{ range .FileNumber }}  - "{{ . }}"
-{{ end }}{{ end }}
-{{ if .Date }}docdate:
-{{ range .Date }}  - "{{ . }}"
-{{ end }}{{ end }}
-{{ if .DateViewed }}dateviewed:
-{{ range .DateViewed }}  - "{{ . }}"
-{{ end }}{{ end }}
-{{ if .Place }}place:
-{{ range .Place }}  - "{{ . }}"
-{{ end }}{{ end }}
-{{ if .URL }}docurl:
-{{ range .URL }}  - "{{ . }}"
-{{ end }}{{ end }}
-{{ if .DocLocation }}doclocation:
-{{ range .DocLocation }}  - "{{ . }}"
-{{ end }}{{ end }}
 {{ if .RefNum }}refnum: "{{ .RefNum }}"{{ end }}
-{{ if .Ref }}ref: |
-  {{ .Ref }}{{ end }}
 ---
-{{ "sourcebody" | shortcode }}
+<table id="source">
+<tr><th>Field</th><th>Data</th></tr>
+{{ if .Type }}<tr><td>Type</td><td>{{ .Type }}</td></tr>{{ end }}
+{{ if .Periodical }}<tr><td>Periodical or Book Name</td><td>{{ .Periodical }}</td></tr>{{ end }}
+{{ if .Author }}<tr><td>Author</td><td>{{ .Author }}</td></tr>{{ end }}
+{{ if .Title }}<tr><td>Title</td><td>{{ .Title }}</td></tr>{{ end }}
+{{ if .Abbr }}<tr><td>Short Title</td><td>{{ .Abbr }}</td></tr>{{ end }}
+{{ if .Publication }}<tr><td>Publication Facts</td><td>{{ .Publication }}</td></tr>{{ end }}
+{{ if .Volume }}<tr><td>Volume</td><td>{{ .Volume }}</td></tr>{{ end }}
+{{ if .Page }}<tr><td>Page</td><td>{{ range .Page }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
+{{ if .Film }}<tr><td>Film Reference</td><td>{{ range .Film }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
+{{ if .Date }}<tr><td>Document Date</td><td>{{ range .Date }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
+{{ if .Place }}<tr><td>Place</td><td>{{ range .Place }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
+{{ if .Repository }}<tr><td>Repository</td><td>{{ range .Repository }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
+{{ if .FileNumber }}<tr><td>File Number</td><td>{{ range .FileNumber }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
+{{ if .File }}<tr><td>File</td><td>{{ range .File }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
+{{ if .URL }}<tr><td>URL</td><td>{{ range .URL }}<a href="{{ . }}" target="_blank"></a>{{ . }}<br />{{ end }}</td></tr>{{ end }}
+{{ if .DocLocation }}<tr><td>Document Location</td><td>{{ range .DocLocation }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
+{{ if .DateViewed }}<tr><td>Date Viewed</td><td>{{ range .DateViewed }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
+{{ if .MediaType }}<tr><td>Media Type</td><td>{{ .MediaType }}</td></tr>{{ end }}
+{{ if .Submitter }}<tr><td>Submitter</td><td>{{ range .Submitter }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
+</table>
+
+<div class="sourceref">
+<p class="sourceref">{{ .RefNum }}. {{ .Ref }}</p>
+</div>
 
 {{ if .Text }}
 ### Notes

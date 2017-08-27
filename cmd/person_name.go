@@ -15,7 +15,7 @@ type personName struct {
 	SourcesInd []int
 }
 
-// newPersonName builds a personRef from a gedcom.NameRecord.
+// newPersonName builds a personName from a gedcom.NameRecord.
 func newPersonName(n *gedcom.NameRecord) *personName {
 
 	given, family := extractNames(n.Name)
