@@ -19,8 +19,36 @@ categories:
 
 <div id="personal_info">
 <table class="personal_info_table">
-<tr><th>Name</th><td class="sex_{{ .Sex }}">{{ .Name.Full }}{{ if .Name.SourcesInd }}<sup>{{ range .Name.SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}{{ if .SourcesInd }}<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}</td></tr>
+<tr><th>Name</th><td class="sex_{{ .Sex }}">
+{{- .Name.Full }}
+{{- if .Name.SourcesInd }}<sup>{{ range .Name.SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}
+{{- if .SourcesInd }}<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}
+</td></tr>
 <tr><th>Sex</th><td class="sex_{{ .Sex }}">{{ .Sex }}</td></tr>
+{{ range .Attributes }}
+<tr><th>{{ .Tag }}</th><td>
+{{ if .Type }}{{ .Type }} {{ end }}
+{{ if .Value }}{{ .Value }} {{ end }}
+{{ if .Date }}{{ .Date }} {{ end }}
+{{ if .Place }}{{ .Place }} {{ end }}
+{{- if .SourcesInd }}<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}
+</td></tr>
+{{ end }}
+</table>
+</div>
+
+<div id="personal_events">
+<table class="personal_event_table">
+<tr><th colspan="2">Life Events</th></tr>
+{{ range .Events }}
+<tr><th>{{ .Tag }}</th><td>
+{{ if .Type }}{{ .Type }} {{ end }}
+{{ if .Value }}{{ .Value }} {{ end }}
+{{ if .Date }}{{ .Date }} {{ end }}
+{{ if .Place }}{{ .Place }} {{ end }}
+{{- if .SourcesInd }}<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}
+</td></tr>
+{{ end }}
 </table>
 </div>
 
@@ -162,6 +190,8 @@ type personTmplData struct {
 	ParentsFamily []*personFamily
 	Family        []*personFamily
 	SourcesInd    []int
+	Attributes    []*eventRef
+	Events        []*eventRef
 }
 
 // sourceCB is the type of the callback function passed to various methods to
@@ -184,7 +214,7 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		data.Sex = "U"
 	}
 
-	// appendSources is the callback method send to any function which might
+	// appendSources is the callback method sent to any function which might
 	// produce sources. It accumulates any sources in the personTmplData
 	// structure and returns to the caller a list of local source references.
 	appendSources := func(s []*sourceRef) []int {
@@ -218,6 +248,23 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		for l := range lastNames {
 			data.LastNames = append(data.LastNames, l)
 		}
+	}
+
+	// Add in personal attributes
+	for _, a := range person.Attribute {
+
+		if a.Tag == "SSN" { // Skip social security number
+			continue
+		}
+		event := newEventRef(a, appendSources)
+		data.Attributes = append(data.Attributes, event)
+	}
+
+	// Add in personal events
+	for _, a := range person.Event {
+
+		event := newEventRef(a, appendSources)
+		data.Events = append(data.Events, event)
 	}
 
 	// Add in the person's parents.
