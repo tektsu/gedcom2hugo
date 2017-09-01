@@ -20,9 +20,24 @@ type sourceIndex map[int]string
 // Global caches
 var sources sourceIndex
 var people personIndex
+var tagTable map[string]string
 
 // Generate reads the GEDCOM file and builds the Hugo input files.
 func Generate(cx *cli.Context) error {
+
+	tagTable = map[string]string{
+		"BAPM":        "Baptism",
+		"BIRT":        "Birth",
+		"BURI":        "Buried",
+		"CHR":         "Christening",
+		"DEAT":        "Death",
+		"EMIG":        "Emigrated",
+		"Idris_photo": "Photo",
+		"NATU":        "Naturalized",
+		"OCCU":        "Occupation",
+		"RELI":        "Religion",
+		"RESI":        "Residence",
+	}
 
 	project := cx.String("project")
 

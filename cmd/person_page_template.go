@@ -24,12 +24,12 @@ categories:
 {{- if .Name.SourcesInd }}<sup>{{ range .Name.SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}
 {{- if .SourcesInd }}<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}
 </td></tr>
-<tr><th>Sex</th><td class="sex_{{ .Sex }}">{{ .Sex }}</td></tr>
+<tr><th class="attrib_heading">Sex</th><td class="sex_{{ .Sex }}">{{ .Sex }}</td></tr>
 {{ if not .Living }}
 {{ range .Attributes }}
-<tr><th>{{ .Tag }}</th><td>
+<tr><th class="attrib_heading">{{ .Name }}</th><td>
+{{ if .Date }}{{ .Date }}: {{ end }}
 {{ if .Value }}{{ .Value }} {{ end }}
-{{ if .Date }}{{ .Date }} {{ end }}
 {{ if .Place }}{{ .Place }} {{ end }}
 {{- if .SourcesInd }}<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}
 </td></tr>
@@ -43,10 +43,9 @@ categories:
 <table class="personal_event_table">
 <tr><th colspan="2">Life Events</th></tr>
 {{ range .Events }}
-<tr><th>{{ .Tag }}</th><td>
+<tr><th class="attrib_heading">{{ .Name }}</th><td>
+{{ if .Date }}{{ .Date }}: {{ end }}
 {{ if .Type }}{{ .Type }} {{ end }}
-{{ if .Value }}{{ .Value }} {{ end }}
-{{ if .Date }}{{ .Date }} {{ end }}
 {{ if .Place }}{{ .Place }} {{ end }}
 {{- if .SourcesInd }}<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}
 </td></tr>
@@ -60,32 +59,36 @@ categories:
 {{ range .ParentsFamily }}
 <table class="parents_family">
 <tr><th colspan="2">Parent's Family</th></tr>
-<tr><th>Father</th><td class="sex_M">
+<tr><th class="attrib_heading">Father</th><td>
 	{{- if .Father -}}
+<div  class="sex_M">
 		<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
 		{{- if .Father.SourcesInd -}}
 			<sup>{{ range .Father.SourcesInd }} [{{ . }}]{{ end }}</sup>
 		{{- end -}}
-	{{- end -}}<br />
+	{{- end -}}
+</div><br />
 </td></tr>
-<tr><th>Mother</th><td class="sex_F">
+<tr><th class="attrib_heading">Mother</th><td>
 	{{- if .Mother -}}
+<div  class="sex_F">
 		<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
 		{{- if .Mother.SourcesInd -}}
 			<sup>{{ range .Mother.SourcesInd }} [{{ . }}]{{ end }}</sup>
 		{{- end -}}
+</div>
 	{{- end -}}<br />
 </td></tr>
 {{ $length := len .Children }} {{ if gt $length 0 }}
-<tr><th>Siblings</th><td>
+<tr><th class="attrib_heading">Siblings</th><td>
 {{ range .Children }}
 	{{ if ne .ID $.ID }}
-		<div  class="sex_{{ .Sex }}">
-			<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
-			{{- if .SourcesInd -}}
-				<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
-			{{- end -}}
-		</div><br />
+<div  class="sex_{{ .Sex }}">
+	<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
+	{{- if .SourcesInd -}}
+		<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
+	{{- end -}}
+</div>
 	{{ end }}
 {{ end }}
 </td></tr>
@@ -101,34 +104,38 @@ categories:
 <table class="family">
 <tr><th colspan="2">Family</th></tr>
 {{ if ne .Father.ID $.ID }}
-<tr><th>Spouse</th><td class="sex_M">
+<tr><th class="attrib_heading">Spouse</th><td class="sex_M">
 	{{- if .Father -}}
+<div  class="sex_M">
 		<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
 		{{- if .Father.SourcesInd -}}
 			<sup>{{ range .Father.SourcesInd }} [{{ . }}]{{ end }}</sup>
 		{{- end -}}
+</div>
 	{{- end -}}<br />
 </td></tr>
 {{ end }}
 {{ if ne .Mother.ID $.ID }}
-<tr><th>Spouse</th><td class="sex_F">
+<tr><th class="attrib_heading">Spouse</th><td>
 	{{- if .Mother -}}
+<div  class="sex_F">
 		<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
 		{{- if .Mother.SourcesInd -}}
 			<sup>{{ range .Mother.SourcesInd }} [{{ . }}]{{ end }}</sup>
 		{{- end -}}
+</div>
 	{{- end -}}<br />
 </td></tr>
 {{ end }}
 {{ $length := len .Children }} {{ if gt $length 0 }}
-<tr><th>Children</th><td>
+<tr><th class="attrib_heading">Children</th><td>
 {{ range .Children }}
-	<div  class="sex_{{ .Sex }}">
-		<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
-		{{- if .SourcesInd -}}
-			<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
-		{{- end -}}
-	</div><br />
+<div  class="sex_{{ .Sex }}">
+	<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
+	{{- if .SourcesInd -}}
+		<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
+	{{- end -}}
+</div>
 {{ end }}
 </td></tr>
 {{ end }}
@@ -142,7 +149,7 @@ categories:
 <table class="sources_table">
 <tr><th colspan="2">Sources</th></tr>
 {{ range $i, $s := .Sources -}}
-<tr><td>{{ add $i 1 }}.</td><td><a href="/s{{ $s.RefNum }}">{{ $s.Ref }}</a></td></tr>
+<tr><th class="source_heading">{{ add $i 1 }}.</th><td><a href="/s{{ $s.RefNum }}">{{ $s.Ref }}</a></td></tr>
 {{ end -}}
 </table>
 </div>
@@ -237,6 +244,9 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 	for _, a := range person.Event {
 
 		event := newEventRef(a, appendSources)
+		if event.Name == "Photo" {
+			continue
+		}
 		data.Events = append(data.Events, event)
 	}
 

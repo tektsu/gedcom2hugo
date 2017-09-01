@@ -3,6 +3,7 @@ package cmd
 import "github.com/tektsu/gedcom"
 
 type eventRef struct {
+	Name       string
 	Tag        string
 	Value      string
 	Type       string
@@ -14,6 +15,7 @@ type eventRef struct {
 func newEventRef(e *gedcom.EventRecord, handleSources sourceCB) *eventRef {
 
 	event := &eventRef{
+		Name:  e.Tag,
 		Tag:   e.Tag,
 		Value: e.Value,
 		Type:  e.Type,
@@ -21,7 +23,11 @@ func newEventRef(e *gedcom.EventRecord, handleSources sourceCB) *eventRef {
 		Place: e.Place.Name,
 	}
 	if event.Tag == "EVEN" && event.Type != "" {
-		event.Tag = event.Type
+		event.Name = event.Type
+	}
+	name, exists := tagTable[event.Name]
+	if exists {
+		event.Name = name
 	}
 	event.SourcesInd = handleSources(sourcesFromCitations(e.Citation))
 	placeSources := handleSources(sourcesFromCitations(e.Place.Citation))
