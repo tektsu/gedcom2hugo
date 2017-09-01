@@ -70,13 +70,8 @@ func Generate(cx *cli.Context) error {
 
 	for _, person := range gc.Individual {
 		id := person.Xref
-		if people[id].Living {
-			continue
-		}
-		//if id == "I126" {
-		//	fmt.Printf("%s\n", spew.Sdump(person))
-		//}
 		file := filepath.Join(personDir, strings.ToLower(id+".md"))
+
 		fh, err := os.Create(file)
 		if err != nil {
 			return cli.NewExitError(err, 1)
