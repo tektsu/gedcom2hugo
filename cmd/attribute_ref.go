@@ -20,6 +20,9 @@ func newEventRef(e *gedcom.EventRecord, handleSources sourceCB) *eventRef {
 		Date:  e.Date,
 		Place: e.Place.Name,
 	}
+	if event.Tag == "EVEN" && event.Type != "" {
+		event.Tag = event.Type
+	}
 	event.SourcesInd = handleSources(sourcesFromCitations(e.Citation))
 	placeSources := handleSources(sourcesFromCitations(e.Place.Citation))
 	for _, i := range placeSources {

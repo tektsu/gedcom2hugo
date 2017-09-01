@@ -28,7 +28,6 @@ categories:
 {{ if not .Living }}
 {{ range .Attributes }}
 <tr><th>{{ .Tag }}</th><td>
-{{ if .Type }}{{ .Type }} {{ end }}
 {{ if .Value }}{{ .Value }} {{ end }}
 {{ if .Date }}{{ .Date }} {{ end }}
 {{ if .Place }}{{ .Place }} {{ end }}
