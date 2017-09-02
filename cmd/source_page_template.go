@@ -17,6 +17,10 @@ categories:
 title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
 {{ if .RefNum }}refnum: "{{ .RefNum }}"{{ end }}
 ---
+<table class="page_title_table">
+<tr><th class="page_title">{{ .Title }}</th></tr>
+</table>
+
 <table id="source">
 <tr><th>Field</th><th>Data</th></tr>
 {{ if .Type }}<tr><td>Type</td><td>{{ .Type }}</td></tr>{{ end }}

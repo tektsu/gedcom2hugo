@@ -17,6 +17,12 @@ categories:
 
 <div id="person">
 
+<div id="page_title">
+<table class="page_title_table">
+<tr><th class="page_title">{{ .Name.Full }}{{ if or .Birth .Death }} ({{ .Birth }} - {{ .Death }}){{ end }}</th></tr>
+</table>
+</div>
+
 <div id="personal_info">
 <table class="personal_info_table">
 <tr><th>Name</th><td class="sex_{{ .Sex }}">
