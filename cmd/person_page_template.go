@@ -41,7 +41,7 @@ categories:
 {{ if not .Living }}
 <div id="personal_events">
 <table class="personal_event_table">
-<tr><th colspan="2">Life Events</th></tr>
+<tr><th colspan="2" class="table_header">Life Events</th></tr>
 {{ range .Events }}
 <tr><th class="attrib_heading">{{ .Name }}</th><td>
 {{ if .Date }}{{ .Date }}: {{ end }}
@@ -58,40 +58,30 @@ categories:
 <div id="parents">
 {{ range .ParentsFamily }}
 <table class="parents_family">
-<tr><th colspan="2">Parent's Family</th></tr>
-<tr><th class="attrib_heading">Father</th><td>
+<tr><th colspan="2" class="table_header">Parent's Family</th></tr>
+<tr><th class="attrib_heading">Father</th><td class="sex_M">
 	{{- if .Father -}}
-<div  class="sex_M">
 		<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
 		{{- if .Father.SourcesInd -}}
 			<sup>{{ range .Father.SourcesInd }} [{{ . }}]{{ end }}</sup>
 		{{- end -}}
-	{{- end -}}
-</div><br />
+	{{- end -}}<br />
 </td></tr>
-<tr><th class="attrib_heading">Mother</th><td>
+<tr><th class="attrib_heading">Mother</th><td class="sex_F">
 	{{- if .Mother -}}
-<div  class="sex_F">
 		<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
 		{{- if .Mother.SourcesInd -}}
 			<sup>{{ range .Mother.SourcesInd }} [{{ . }}]{{ end }}</sup>
 		{{- end -}}
-</div>
 	{{- end -}}<br />
 </td></tr>
 {{ $length := len .Children }} {{ if gt $length 0 }}
-<tr><th class="attrib_heading">Siblings</th><td>
-{{ range .Children }}
-	{{ if ne .ID $.ID }}
-<div  class="sex_{{ .Sex }}">
-	<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
-	{{- if .SourcesInd -}}
-		<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
-	{{- end -}}
-</div>
-	{{ end }}
-{{ end }}
+{{ range $index, $child := .Children }}
+<tr>{{ if eq $index 0 }}<th class="attrib_heading" rowspan="{{ $length }}">Children</th>{{ end }}
+<td class="sex_{{ $child.Sex }}">{{ if ne .ID $.ID }}<a href="/{{ $child.ID | ToLower }}/">{{ end }}{{ $child.Name }}{{ if ne .ID $.ID }}</a>{{ end }}
+{{- if $child.SourcesInd -}}<sup>{{ range $child.SourcesInd }} [{{ . }}]{{ end }}</sup>{{- end -}}
 </td></tr>
+{{ end }}
 {{ end }}
 </table>
 {{ end }}
@@ -102,42 +92,35 @@ categories:
 <div id="family">
 {{ range .Family}}
 <table class="family">
-<tr><th colspan="2">Family</th></tr>
+<tr><th colspan="2" class="table_header">Family</th></tr>
+
 {{ if ne .Father.ID $.ID }}
 <tr><th class="attrib_heading">Spouse</th><td class="sex_M">
 	{{- if .Father -}}
-<div  class="sex_M">
 		<a href="/{{ .Father.ID | ToLower }}/">{{ .Father.Name }}</a>
 		{{- if .Father.SourcesInd -}}
 			<sup>{{ range .Father.SourcesInd }} [{{ . }}]{{ end }}</sup>
 		{{- end -}}
-</div>
 	{{- end -}}<br />
 </td></tr>
 {{ end }}
 {{ if ne .Mother.ID $.ID }}
-<tr><th class="attrib_heading">Spouse</th><td>
+<tr><th class="attrib_heading">Spouse</th><td class="sex_F">
 	{{- if .Mother -}}
-<div  class="sex_F">
 		<a href="/{{ .Mother.ID | ToLower }}/">{{ .Mother.Name }}</a>
 		{{- if .Mother.SourcesInd -}}
 			<sup>{{ range .Mother.SourcesInd }} [{{ . }}]{{ end }}</sup>
 		{{- end -}}
-</div>
 	{{- end -}}<br />
 </td></tr>
 {{ end }}
 {{ $length := len .Children }} {{ if gt $length 0 }}
-<tr><th class="attrib_heading">Children</th><td>
-{{ range .Children }}
-<div  class="sex_{{ .Sex }}">
-	<a href="/{{ .ID | ToLower }}/">{{ .Name }}</a>
-	{{- if .SourcesInd -}}
-		<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>
-	{{- end -}}
-</div>
-{{ end }}
+{{ range $index, $child := .Children }}
+<tr>{{ if eq $index 0 }}<th class="attrib_heading" rowspan="{{ $length }}">Children</th>{{ end }}
+<td class="sex_{{ $child.Sex }}"><a href="/{{ $child.ID | ToLower }}/">{{ $child.Name }}</a>
+{{- if $child.SourcesInd -}}<sup>{{ range $child.SourcesInd }} [{{ . }}]{{ end }}</sup>{{- end -}}
 </td></tr>
+{{ end }}
 {{ end }}
 </table>
 {{ end }}
@@ -147,7 +130,7 @@ categories:
 {{ if .Sources -}}
 <div id="sources">
 <table class="sources_table">
-<tr><th colspan="2">Sources</th></tr>
+<tr><th colspan="2" class="table_header">Sources</th></tr>
 {{ range $i, $s := .Sources -}}
 <tr><th class="source_heading">{{ add $i 1 }}.</th><td><a href="/s{{ $s.RefNum }}">{{ $s.Ref }}</a></td></tr>
 {{ end -}}
