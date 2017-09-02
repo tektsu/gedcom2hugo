@@ -6,7 +6,7 @@ import (
 
 // personPageTemplate is the template used to build a person web page.
 const personPageTemplate string = `---
-title: "{{ .Name.Full }}"
+title: "{{ .Name.Full }}{{ if or .Birth .Death }} ({{ .Birth }} - {{ .Death }}){{ end }}"
 url: "/{{ .ID | ToLower }}/"
 categories:
   - Person
@@ -155,6 +155,8 @@ type personTmplData struct {
 	SourcesInd    []int
 	Attributes    []*eventRef
 	Events        []*eventRef
+	Birth         string
+	Death         string
 }
 
 // sourceCB is the type of the callback function passed to various methods to
@@ -229,6 +231,14 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		event := newEventRef(a, appendSources)
 		if event.Name == "Photo" {
 			continue
+		}
+		if !data.Living {
+			if event.Name == "Birth" {
+				data.Birth = event.Date
+			}
+			if event.Name == "Death" {
+				data.Death = event.Date
+			}
 		}
 		data.Events = append(data.Events, event)
 	}
