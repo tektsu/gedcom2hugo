@@ -45,6 +45,7 @@ categories:
 </div>
 
 {{ if not .Living }}
+{{ $len := len .Events }}{{ if gt $len 0 }}
 <div id="personal_events">
 <table class="personal_event_table">
 <tr><th colspan="2" class="table_header">Life Events</th></tr>
@@ -58,6 +59,7 @@ categories:
 {{ end }}
 </table>
 </div>
+{{ end }}
 {{ end }}
 
 {{ if .ParentsFamily }}
