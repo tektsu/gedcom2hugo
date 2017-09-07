@@ -22,6 +22,18 @@ var sources sourceIndex
 var people personIndex
 var tagTable map[string]string
 
+func shortcode(c string) string {
+	return fmt.Sprintf("{{< %s >}}", c)
+}
+
+func openShortcode() string {
+	return fmt.Sprintf("{{< ")
+}
+
+func closeShortcode() string {
+	return fmt.Sprintf(" >}}")
+}
+
 // Generate reads the GEDCOM file and builds the Hugo input files.
 func Generate(cx *cli.Context) error {
 
@@ -97,8 +109,11 @@ func Generate(cx *cli.Context) error {
 
 		tpl := template.New("person")
 		funcs := template.FuncMap{
-			"add":     func(x, y int) int { return x + y },
-			"ToLower": strings.ToLower,
+			"add":            func(x, y int) int { return x + y },
+			"ToLower":        strings.ToLower,
+			"shortcode":      shortcode,
+			"openShortcode":  openShortcode,
+			"closeShortcode": closeShortcode,
 		}
 		tpl.Funcs(funcs)
 		tpl, err = tpl.Parse(personPageTemplate)

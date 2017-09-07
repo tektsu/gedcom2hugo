@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/tektsu/gedcom"
 )
 
@@ -135,6 +137,21 @@ categories:
 </div>
 {{ end }}
 
+{{ if .Photos }}
+<div id="photos">
+<table class="photos_table">
+<tr><th colspan="2" class="table_header">Photos</th></tr>
+</table>
+{{ "load-photoswipe" | shortcode }}
+{{ "gallery" | shortcode }}
+{{ range .Photos }}
+{{ openShortcode }}figure link="/images/photos/{{ .File }}" caption="{{ .Title }}"{{ closeShortcode}}
+{{ end }}
+{{ "/gallery" | shortcode }}
+<br />
+</div>
+{{ end }}
+
 {{ if .Sources -}}
 <div id="sources">
 <table class="sources_table">
@@ -165,6 +182,8 @@ type personTmplData struct {
 	Events        []*eventRef
 	Birth         string
 	Death         string
+	TopPhoto      *photoRef
+	Photos        []*photoRef
 }
 
 // sourceCB is the type of the callback function passed to various methods to
@@ -265,6 +284,20 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 			family := newPersonFamily(fr, appendSources)
 			data.Family = append(data.Family, family)
 		}
+	}
+
+	// Add in photos
+	for _, o := range person.Object {
+
+		if o.Form != "jpg" && o.Form != "png" {
+			continue
+		}
+		p := newPhotoRef(o)
+		data.Photos = append(data.Photos, p)
+		if data.TopPhoto == nil {
+			data.TopPhoto = p
+		}
+		fmt.Printf("%+v\n", p)
 	}
 
 	return data
