@@ -15,18 +15,25 @@ categories:
 {{ if .LastNames }}lastnames:
   {{ range .LastNames }}- {{ . }}{{ end }}
 {{- end }}
+{{ if .TopPhoto }}portrait: {{ .TopPhoto.File }}{{end}}
 ---
 
 <div id="person">
 
 <div id="page_title">
 <table class="page_title_table">
-<tr><th class="page_title">{{ .Name.Full }}{{ if or .Birth .Death }} ({{ .Birth }} - {{ .Death }}){{ end }}</th></tr>
+<tr>
+{{- if .TopPhoto }}
+<th class="page_title"{{ if ne .TopPhoto.Width 0 }} style="width:{{ .TopPhoto.Width }}px"{{ end }}><img src="/images/photos/{{ .TopPhoto.File }}" class="portrait" /></th>
+{{- end }}
+<th class="page_title" style="width:auto;">{{ .Name.Full }}{{ if or .Birth .Death }}<br />({{ .Birth }} - {{ .Death }}){{ end }}</th>
+</tr>
 </table>
 </div>
 
 <div id="personal_info">
 <table class="personal_info_table">
+<tr><th colspan="2" class="table_header">Personal Information</th></tr>
 <tr><th>Name</th><td class="sex_{{ .Sex }}">
 {{- .Name.Full }}
 {{- if .Name.SourcesInd }}<sup>{{ range .Name.SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}
@@ -45,6 +52,7 @@ categories:
 {{ end }}
 </table>
 </div>
+<br />
 
 {{ if not .Living }}
 {{ $len := len .Events }}{{ if gt $len 0 }}
@@ -294,7 +302,7 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		}
 		p := newPhotoRef(o)
 		data.Photos = append(data.Photos, p)
-		if data.TopPhoto == nil {
+		if o.Primary {
 			data.TopPhoto = p
 		}
 		fmt.Printf("%+v\n", p)
