@@ -24,7 +24,7 @@ categories:
 <table class="page_title_table">
 <tr>
 {{- if .TopPhoto }}
-<th class="page_title"{{ if ne .TopPhoto.Width 0 }} style="width:{{ .TopPhoto.Width }}px"{{ end }}><img src="/images/photos/{{ .TopPhoto.File }}" class="portrait" /></th>
+<th class="page_title"{{ if ne .TopPhoto.Width 0 }} style="width:{{ min .TopPhoto.Width 200 }}px"{{ end }}><img src="/images/photos/{{ .TopPhoto.File }}" class="portrait" /></th>
 {{- end }}
 <th class="page_title" style="width:auto;">{{ .Name.Full }}{{ if or .Birth .Death }}<br />({{ .Birth }} - {{ .Death }}){{ end }}</th>
 </tr>

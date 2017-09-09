@@ -34,6 +34,13 @@ func closeShortcode() string {
 	return fmt.Sprintf(" >}}")
 }
 
+func min(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
+
 // Generate reads the GEDCOM file and builds the Hugo input files.
 func Generate(cx *cli.Context) error {
 
@@ -110,6 +117,7 @@ func Generate(cx *cli.Context) error {
 		tpl := template.New("person")
 		funcs := template.FuncMap{
 			"add":            func(x, y int) int { return x + y },
+			"min":            min,
 			"ToLower":        strings.ToLower,
 			"shortcode":      shortcode,
 			"openShortcode":  openShortcode,
