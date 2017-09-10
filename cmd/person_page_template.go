@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/tektsu/gedcom"
 )
 
@@ -305,7 +303,6 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		if o.Primary {
 			data.TopPhoto = p
 		}
-		fmt.Printf("%+v\n", p)
 	}
 
 	return data
