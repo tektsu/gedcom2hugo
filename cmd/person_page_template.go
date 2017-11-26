@@ -109,7 +109,6 @@ categories:
 {{ range .Family}}
 <table class="family">
 <tr><th colspan="2" class="table_header">Family</th></tr>
-
 {{ if ne .Father.ID $.ID }}
 <tr><th class="attrib_heading">Spouse</th><td class="sex_M">
 	{{- if .Father -}}
@@ -286,10 +285,8 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 
 	// Add in the person's family.
 	for _, fr := range person.Family {
-		if fr.Family != nil {
-			family := newPersonFamily(fr, appendSources)
-			data.Family = append(data.Family, family)
-		}
+		family := newPersonFamily(fr, appendSources)
+		data.Family = append(data.Family, family)
 	}
 
 	// Add in photos

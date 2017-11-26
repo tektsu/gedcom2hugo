@@ -1,6 +1,8 @@
 package cmd
 
-import "github.com/tektsu/gedcom"
+import (
+	"github.com/tektsu/gedcom"
+)
 
 // personRef describes a reference to a person.
 // It is used to reference other people on a person page.
@@ -19,11 +21,14 @@ type personRef struct {
 // newPersonRef builds person reference from a gedcom.IndividualRecord.
 func newPersonRef(i *gedcom.IndividualRecord) *personRef {
 
-	person := &personRef{
-		ID:     i.Xref,
-		Sex:    i.Sex,
-		Name:   people[i.Xref].FullName,
-		Living: people[i.Xref].Living,
+	person := &personRef{ID: "", Sex: "", Name: "", Living: false}
+	if i != nil {
+		person = &personRef{
+			ID:     i.Xref,
+			Sex:    i.Sex,
+			Name:   people[i.Xref].FullName,
+			Living: people[i.Xref].Living,
+		}
 	}
 	if person.Sex != "M" && person.Sex != "F" {
 		person.Sex = "U"
@@ -38,12 +43,14 @@ func newPersonRef(i *gedcom.IndividualRecord) *personRef {
 // handle source references.
 func newPersonRefWithCitations(i *gedcom.IndividualRecord, handleSources sourceCB) *personRef {
 
-	if i == nil {
-		return nil
-	}
+	//if i == nil {
+	//	return nil
+	//}
 
 	person := newPersonRef(i)
-	person.SourcesInd = handleSources(sourcesFromCitations(i.Name[0].Citation))
+	if person.ID != "" {
+		person.SourcesInd = handleSources(sourcesFromCitations(i.Name[0].Citation))
+	}
 
 	return person
 }
