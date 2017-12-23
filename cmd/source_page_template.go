@@ -180,41 +180,7 @@ func newSourceTmplData(s *gedcom.SourceRecord) *sourceTmplData {
 	d.Notes = strings.Replace(esc, "\n", "<br>", -1)
 
 	// Build the reference string.
-	var refs []string
-	if d.Author != "" {
-		refs = append(refs, d.Author)
-	}
-	if d.Title != "" {
-		refs = append(refs, fmt.Sprintf("\"%s\"", d.Title))
-	}
-	if len(d.Date) > 0 {
-		refs = append(refs, d.Date[0])
-	}
-	if d.Periodical != "" {
-		refs = append(refs, fmt.Sprintf("%s", d.Periodical))
-	}
-	if d.Volume != "" {
-		refs = append(refs, fmt.Sprintf("%s", d.Volume))
-	}
-	if len(d.Page) > 0 {
-		refs = append(refs, fmt.Sprintf("p %s", d.Page[0]))
-	}
-	if len(d.Film) > 0 {
-		refs = append(refs, d.Film[0])
-	}
-	if len(d.Place) > 0 {
-		refs = append(refs, d.Place[0])
-	}
-	if d.Type != "" {
-		refs = append(refs, d.Type)
-	}
-	if len(d.URL) > 0 {
-		refs = append(refs, fmt.Sprintf("[%s]", d.URL[0]))
-	}
-	if len(d.FileNumber) > 0 {
-		refs = append(refs, d.FileNumber[0])
-	}
-	d.Ref = strings.Join(refs, ", ")
+	d.Ref = s.GetReferenceString()
 
 	return d
 }
