@@ -87,7 +87,7 @@ func newPersonIndex(gc *gedcom.Gedcom) personIndex {
 func extractNames(name string) (string, string) {
 	var given, family string
 
-	re := regexp.MustCompile("^([^/]+) +/(.+)/$")
+	re := regexp.MustCompile("^([^/]+) +/(.+)/(.*)$")
 	names := re.FindStringSubmatch(name)
 	given = names[1]
 	family = names[2]

@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"html/template"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -21,6 +23,10 @@ title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
 <tr><th class="page_title">{{ .Title }}</th></tr>
 </table>
 
+<div class="sourceref">
+<p class="sourceref"><strong>Citation:</strong> {{ .Ref }}</p>
+</div>
+
 <table id="source">
 <tr><th>Field</th><th>Data</th></tr>
 {{ if .Type }}<tr><td>Type</td><td>{{ .Type }}</td></tr>{{ end }}
@@ -36,17 +42,14 @@ title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
 {{ if .Place }}<tr><td>Place</td><td>{{ range .Place }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
 {{ if .Repository }}<tr><td>Repository</td><td>{{ range .Repository }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
 {{ if .FileNumber }}<tr><td>File Number</td><td>{{ range .FileNumber }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
-{{ if .File }}<tr><td>File</td><td>{{ range .File }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
+{{ if .File }}<tr><td>Files</td><td>{{ range .File }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
 {{ if .URL }}<tr><td>URL</td><td>{{ range .URL }}<a href="{{ . }}" target="_blank"></a>{{ . }}<br />{{ end }}</td></tr>{{ end }}
 {{ if .DocLocation }}<tr><td>Document Location</td><td>{{ range .DocLocation }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
 {{ if .DateViewed }}<tr><td>Date Viewed</td><td>{{ range .DateViewed }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
 {{ if .MediaType }}<tr><td>Media Type</td><td>{{ .MediaType }}</td></tr>{{ end }}
 {{ if .Submitter }}<tr><td>Submitter</td><td>{{ range .Submitter }}{{ . }}<br />{{ end }}</td></tr>{{ end }}
+{{ if .Notes }}<tr><td>Notes</td><td>{{ .Notes }}</td></tr>{{ end }}
 </table>
-
-<div class="sourceref">
-<p class="sourceref">{{ .RefNum }}. {{ .Ref }}</p>
-</div>
 
 {{ if .Text }}
 ### Notes
@@ -80,6 +83,7 @@ type sourceTmplData struct {
 	Submitter   []string
 	Page        []string
 	Film        []string
+	Notes       string
 }
 
 // newSourceTmplData builds a sourceTmplData structure from a
@@ -116,9 +120,16 @@ func newSourceTmplData(s *gedcom.SourceRecord) *sourceTmplData {
 	d.RefNum = v
 
 	// Copy in the arrays
-	if len(s.File) > 0 {
-		d.File = make([]string, len(s.File))
-		copy(d.File, s.File)
+	if len(s.Object) > 0 {
+		r := regexp.MustCompile("^.*Roots/")
+		m, _ := regexp.Compile("^/")
+		for _, o := range s.Object {
+			name := r.ReplaceAllString(o.File.Name, "")
+			if m.MatchString(name) {
+				name = filepath.Base(name)
+			}
+			d.File = append(d.File, name)
+		}
 	}
 	if len(s.FileNumber) > 0 {
 		d.FileNumber = make([]string, len(s.FileNumber))
@@ -160,6 +171,13 @@ func newSourceTmplData(s *gedcom.SourceRecord) *sourceTmplData {
 		d.Film = make([]string, len(s.Film))
 		copy(d.Film, s.Film)
 	}
+	if len(s.Note) > 0 {
+		for _, n := range s.Note {
+			d.Notes += n.Note + "\n\n"
+		}
+	}
+	esc := strings.TrimRight(template.HTMLEscapeString(d.Notes), "\n")
+	d.Notes = strings.Replace(esc, "\n", "<br>", -1)
 
 	// Build the reference string.
 	var refs []string

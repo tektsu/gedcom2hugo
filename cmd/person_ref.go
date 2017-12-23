@@ -57,14 +57,14 @@ func newPersonRefWithCitations(i *gedcom.IndividualRecord, handleSources sourceC
 
 // newPersonRefWithCitationsAsChild is the same as mewPersonRefWithCitations,
 // except that it omits the last name of the person.
-func newPersonRefWithCitationsAsChild(i *gedcom.IndividualRecord, handleSources sourceCB) *personRef {
+func newPersonRefWithCitationsAsChild(i *gedcom.ChildRecord, handleSources sourceCB) *personRef {
 
 	if i == nil {
 		return nil
 	}
 
-	person := newPersonRefWithCitations(i, handleSources)
-	person.Name = people[i.Xref].GivenName
+	person := newPersonRefWithCitations(i.Person, handleSources)
+	person.Name = people[i.Person.Xref].GivenName
 
 	return person
 }

@@ -13,6 +13,7 @@ import (
 type sourceRef struct {
 	RefNum int
 	Ref    string
+	Detail string
 }
 
 // newSourceRef builds a sourceRef from a gedcom.SourceRecord.
@@ -33,5 +34,6 @@ func newSourceRef(s *gedcom.SourceRecord) *sourceRef {
 // A poorly-formed Gedcom file can produce a panic.
 func newSourceRefFromCitation(c *gedcom.CitationRecord) *sourceRef {
 	source := newSourceRef(c.Source)
+	source.Detail = c.Page
 	return source
 }

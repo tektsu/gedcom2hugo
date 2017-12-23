@@ -162,7 +162,7 @@ categories:
 <table class="sources_table">
 <tr><th colspan="2" class="table_header">Sources</th></tr>
 {{ range $i, $s := .Sources -}}
-<tr><th class="source_heading">{{ add $i 1 }}.</th><td><a href="/s{{ $s.RefNum }}">{{ $s.Ref }}</a></td></tr>
+<tr><th class="source_heading">{{ add $i 1 }}.</th><td><a href="/s{{ $s.RefNum }}">{{ $s.Ref }}</a>{{ if $s.Detail }}, {{ $s.Detail }}{{ end }}</td></tr>
 {{ end -}}
 </table>
 </div>
@@ -292,14 +292,17 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 	// Add in photos
 	for _, o := range person.Object {
 
-		if o.Form != "jpg" && o.Form != "png" {
+		if o.File.Form != "jpg" && o.File.Form != "png" {
 			continue
 		}
 		p := newPhotoRef(o)
 		data.Photos = append(data.Photos, p)
-		if o.Primary {
-			data.TopPhoto = p
-		}
+	}
+
+	// Get Top photo
+	if person.Photo != nil {
+		p := newPhotoRef(person.Photo)
+		data.TopPhoto = p
 	}
 
 	return data
