@@ -7,6 +7,7 @@ import (
 	_ "image/png"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/tektsu/gedcom"
 )
@@ -27,9 +28,10 @@ type photoIndex map[string]*photoRef
 
 func newPhotoRef(o *gedcom.ObjectRecord, person *gedcom.IndividualRecord) *photoRef {
 
-	if _, ok := photos[o.Xref]; !ok {
-		photos[o.Xref] = &photoRef{
-			ID:      o.Xref,
+	key := getPhotoKeyFromObject(o)
+	if _, ok := photos[key]; !ok {
+		photos[key] = &photoRef{
+			ID:      key,
 			File:    filepath.Base(o.File.Name),
 			Title:   o.File.Title,
 			Persons: make(photoPersonIndex),
@@ -39,23 +41,29 @@ func newPhotoRef(o *gedcom.ObjectRecord, person *gedcom.IndividualRecord) *photo
 		defer file.Close()
 		if err != nil {
 			fmt.Printf("%v\n", err)
-			return photos[o.Xref]
+			return photos[key]
 		}
 
 		image, _, err := image.DecodeConfig(file) // Image Struct
 		if err != nil {
 			fmt.Printf("%s: %v\n", o.File.Name, err)
-			return photos[o.Xref]
+			return photos[key]
 		}
 
-		photos[o.Xref].Width = image.Width
-		photos[o.Xref].Height = image.Height
-	}
-	p := photos[o.Xref]
-
-	if _, ok := photos[o.Xref].Persons[person.Xref]; !ok {
-		photos[o.Xref].Persons[person.Xref] = newPersonRef(person)
+		photos[key].Width = image.Width
+		photos[key].Height = image.Height
 	}
 
-	return p
+	if _, ok := photos[key].Persons[person.Xref]; !ok {
+		photos[key].Persons[person.Xref] = newPersonRef(person)
+	}
+
+	return photos[key]
+}
+
+func getPhotoKeyFromObject(o *gedcom.ObjectRecord) string {
+
+	key := "p" + strings.ToLower(strings.Replace(filepath.Base(o.File.Name), ".", "", -1))
+
+	return key
 }

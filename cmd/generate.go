@@ -148,10 +148,9 @@ func Generate(cx *cli.Context) error {
 		return cli.NewExitError(err, 1)
 	}
 
-	for _, photo := range photos {
+	for key, photo := range photos {
 
-		id := photo.ID
-		file := filepath.Join(mediaDir, strings.ToLower(id+".md"))
+		file := filepath.Join(mediaDir, strings.ToLower(key+".md"))
 
 		fh, err := os.Create(file)
 		if err != nil {
@@ -175,6 +174,7 @@ func Generate(cx *cli.Context) error {
 		}
 		err = tpl.Execute(fh, newPhotoTmplData(photo))
 	}
+
 	return nil
 }
 

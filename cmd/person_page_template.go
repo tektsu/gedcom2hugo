@@ -50,7 +50,6 @@ categories:
 {{ end }}
 </table>
 </div>
-<br />
 
 {{ if not .Living }}
 {{ $len := len .Events }}{{ if gt $len 0 }}

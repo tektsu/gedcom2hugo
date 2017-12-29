@@ -5,18 +5,26 @@ const photoPageTemplate string = `---
 url: "/{{ .ID }}/"
 categories:
   - Photo
+lead_photo: {{ .File }}
 ---
-<figure>
-	<img src="/images/photos/{{ .File }}" alt="{{ .Title }}" />
-	<figcaption><strong>{{ .Title }}</strong>
+<div id="photopage">
+
+<div id="photopage_title">
+<p>{{ .Title }}</p>
+</div>
+
+{{ "lead_photo_center" | shortcode }}
+
 {{ $length := len .Persons }} {{ if gt $length 0 }}
-<br /><br />People linked to this photo:<br />
+<div id="photopage_linklist">
+<p class="photopage_linklist_header">People linked to this photo:</p>
 {{ range $index, $person := .Persons }}
-<a href="/{{ $person.ID | ToLower }}/">{{ $person.Name }}</a><br />
+<p class="photopage_linklist_entry"><a href="/{{ $person.ID | ToLower }}/">{{ $person.Name }}</a></p>
 {{ end }}
+</div>
 {{ end }}
-	</figcaption>
-</figure>
+
+</div>
 `
 
 type photoTmplData struct {
