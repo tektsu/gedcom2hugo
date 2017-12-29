@@ -91,6 +91,16 @@ categories:
 		{{- end -}}
 	{{- end -}}<br />
 </td></tr>
+{{ $events := len .Events }} {{ if gt $events 0 }}
+{{ range $index, $event := .Events }}
+<tr><th class="attrib_heading">{{ .Name  }}</th><td>
+{{ if .Date }}{{ .Date }}: {{ end }}
+{{ if .Type }}{{ .Type }} {{ end }}
+{{ if .Place }}{{ .Place }} {{ end }}
+{{- if .SourcesInd }}<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}
+</td></tr>
+{{ end }}
+{{ end }}
 {{ $length := len .Children }} {{ if gt $length 0 }}
 {{ range $index, $child := .Children }}
 <tr>{{ if eq $index 0 }}<th class="attrib_heading" rowspan="{{ $length }}">Children</th>{{ end }}
@@ -128,6 +138,16 @@ categories:
 		{{- end -}}
 	{{- end -}}<br />
 </td></tr>
+{{ end }}
+{{ $events := len .Events }} {{ if gt $events 0 }}
+{{ range $index, $event := .Events }}
+<tr><th class="attrib_heading">{{ .Name }}</th><td>
+{{ if .Date }}{{ .Date }}: {{ end }}
+{{ if .Type }}{{ .Type }} {{ end }}
+{{ if .Place }}{{ .Place }} {{ end }}
+{{- if .SourcesInd }}<sup>{{ range .SourcesInd }} [{{ . }}]{{ end }}</sup>{{ end }}
+</td></tr>
+{{ end }}
 {{ end }}
 {{ $length := len .Children }} {{ if gt $length 0 }}
 {{ range $index, $child := .Children }}
@@ -295,13 +315,13 @@ func newPersonTmplData(person *gedcom.IndividualRecord) *personTmplData {
 		if o.File.Form != "jpg" && o.File.Form != "png" {
 			continue
 		}
-		p := newPhotoRef(o)
+		p := newPhotoRef(o, person)
 		data.Photos = append(data.Photos, p)
 	}
 
 	// Get Top photo
 	if person.Photo != nil {
-		p := newPhotoRef(person.Photo)
+		p := newPhotoRef(person.Photo, person)
 		data.TopPhoto = p
 	}
 

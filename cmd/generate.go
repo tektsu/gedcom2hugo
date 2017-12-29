@@ -21,6 +21,7 @@ type sourceIndex map[int]string
 var sources sourceIndex
 var people personIndex
 var tagTable map[string]string
+var photos photoIndex
 
 func shortcode(c string) string {
 	return fmt.Sprintf("{{< %s >}}", c)
@@ -45,18 +46,27 @@ func min(x, y int) int {
 func Generate(cx *cli.Context) error {
 
 	tagTable = map[string]string{
-		"BAPM":        "Baptism",
-		"BIRT":        "Birth",
-		"BURI":        "Buried",
-		"CHR":         "Christening",
-		"DEAT":        "Death",
-		"EMIG":        "Emigrated",
-		"Idris_photo": "Photo",
-		"NATU":        "Naturalized",
-		"OCCU":        "Occupation",
-		"RELI":        "Religion",
-		"RESI":        "Residence",
+		"BAPM": "Baptism",
+		"BIRT": "Birth",
+		"BURI": "Buried",
+		"CENS": "Census",
+		"CHR":  "Christening",
+		"DEAT": "Death",
+		"DIV":  "Divorced",
+		"DIVF": "Divorce Filed",
+		"EMIG": "Emigrated",
+		"ENGA": "Engaged",
+		"GRAD": "Graduated",
+		"MARB": "Marriage Bann",
+		"MARL": "Marriage License",
+		"MARR": "Married",
+		"NATU": "Naturalized",
+		"OCCU": "Occupation",
+		"RELI": "Religion",
+		"RESI": "Residence",
 	}
+
+	photos = make(photoIndex)
 
 	project := cx.String("project")
 
@@ -129,6 +139,41 @@ func Generate(cx *cli.Context) error {
 			return cli.NewExitError(err, 1)
 		}
 		err = tpl.Execute(fh, data)
+	}
+
+	// Generate Media Pages.
+	mediaDir := filepath.Join(project, "content", "media")
+	err = os.MkdirAll(mediaDir, 0777)
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+
+	for _, photo := range photos {
+
+		id := photo.ID
+		file := filepath.Join(mediaDir, strings.ToLower(id+".md"))
+
+		fh, err := os.Create(file)
+		if err != nil {
+			return cli.NewExitError(err, 1)
+		}
+		defer fh.Close()
+
+		tpl := template.New("photo")
+		funcs := template.FuncMap{
+			"add":            func(x, y int) int { return x + y },
+			"min":            min,
+			"ToLower":        strings.ToLower,
+			"shortcode":      shortcode,
+			"openShortcode":  openShortcode,
+			"closeShortcode": closeShortcode,
+		}
+		tpl.Funcs(funcs)
+		tpl, err = tpl.Parse(photoPageTemplate)
+		if err != nil {
+			return cli.NewExitError(err, 1)
+		}
+		err = tpl.Execute(fh, newPhotoTmplData(photo))
 	}
 	return nil
 }

@@ -1,6 +1,8 @@
 package cmd
 
-import "github.com/tektsu/gedcom"
+import (
+	"github.com/tektsu/gedcom"
+)
 
 // personFamily describes a person's family, either their own or their
 // parents.
@@ -11,6 +13,7 @@ type personFamily struct {
 	ID        string
 	Pedigree  string
 	AdoptedBy string
+	Events    []*eventRef
 	Mother    *personRef
 	Father    *personRef
 	Children  []*personRef
@@ -34,6 +37,10 @@ func newPersonFamily(flr *gedcom.FamilyLinkRecord, handleSources sourceCB) *pers
 
 	family.Father = newPersonRefWithCitations(flr.Family.Husband, handleSources)
 	family.Mother = newPersonRefWithCitations(flr.Family.Wife, handleSources)
+	for _, e := range flr.Family.Event {
+		event := newEventRef(e, handleSources)
+		family.Events = append(family.Events, event)
+	}
 	for _, i := range flr.Family.Child {
 		var child *personRef
 		child = newPersonRefWithCitationsAsChild(i, handleSources)
