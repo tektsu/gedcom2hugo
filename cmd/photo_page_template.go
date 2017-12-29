@@ -6,6 +6,11 @@ url: "/{{ .ID }}/"
 categories:
   - Photo
 lead_photo: {{ .File }}
+photo_key: {{ .ID  }}
+{{ $length := len .Persons }}{{ if gt $length 0 }}photo_people:
+{{ range $index, $person := .Persons }}  - {{ $person.ID | ToLower }}
+{{ end }}
+{{- end }}
 ---
 <div id="photopage">
 

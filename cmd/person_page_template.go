@@ -164,15 +164,13 @@ categories:
 {{ if .Photos }}
 <div id="photos">
 <table class="photos_table">
-<tr><th colspan="2" class="table_header">Photos</th></tr>
+<tr><th colspan="2" class="table_header">Photo Gallery</th></tr>
 </table>
-{{ "load-photoswipe" | shortcode }}
-{{ "gallery" | shortcode }}
+<section id="photo_gallery">
 {{ range .Photos }}
-{{ openShortcode }}figure link="/images/photos/{{ .File }}" caption="{{ .Title }}"{{ closeShortcode}}
+<a href="/{{ .ID }}/"><img class="gallery_photo" src="/images/photos/{{ .File }}" alt="{{.Title}}" /></a>
 {{ end }}
-{{ "/gallery" | shortcode }}
-<br />
+</section>
 </div>
 {{ end }}
 
@@ -188,6 +186,37 @@ categories:
 {{- end }}
 
 </div>
+`
+
+const OldPhotoCode string = `
+{{ if .Photos }}
+<div id="photos">
+<table class="photos_table">
+<tr><th colspan="2" class="table_header">Photos</th></tr>
+</table>
+{{ "load-photoswipe" | shortcode }}
+{{ "gallery" | shortcode }}
+{{ range .Photos }}
+{{ openShortcode }}figure link="/images/photos/{{ .File }}" caption="{{ .Title }}"{{ closeShortcode}}
+{{ end }}
+{{ "/gallery" | shortcode }}
+<br />
+</div>
+{{ end }}
+
+{{ if .Photos }}
+<div id="photos">
+<table class="photos_table">
+<tr><th colspan="2" class="table_header">Photo Gallery</th></tr>
+</table>
+{{ range .Photos }}
+<div class="gallery_photo">
+<a href="/{{ .ID }}/"><img class="gallery_photo" src="/images/photos/150/{{ .File }}" alt="{{.Title}}" /></a>
+</div>
+{{ end }}
+</div>
+{{ end }}
+
 `
 
 // personTmplData is the structure that is sent to the personPageTemplate for display.
