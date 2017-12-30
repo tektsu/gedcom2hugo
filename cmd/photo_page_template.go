@@ -36,15 +36,19 @@ type photoTmplData struct {
 	ID      string
 	File    string
 	Title   string
+	Height  int
+	Width   int
 	Persons []*personRef
 }
 
 func newPhotoTmplData(photo *photoRef) *photoTmplData {
 
 	d := &photoTmplData{
-		ID:    photo.ID,
-		File:  photo.File,
-		Title: photo.Title,
+		ID:     photo.ID,
+		File:   photo.File,
+		Title:  photo.Title,
+		Height: photo.Height,
+		Width:  photo.Width,
 	}
 
 	for _, person := range photo.Persons {

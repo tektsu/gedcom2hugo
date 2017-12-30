@@ -16,6 +16,11 @@ categories:
 {{ if .TopPhoto }}portrait: {{ .TopPhoto.File }}{{end}}
 ---
 
+<link rel="stylesheet" href="/js/photoswipe.css">
+<link rel="stylesheet" href="/js/default-skin/default-skin.css">
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
 <div id="person">
 
 <div id="page_title">
@@ -171,7 +176,72 @@ categories:
 <a href="/{{ .ID }}/"><img class="gallery_photo" src="/images/photos/{{ .File }}" alt="{{.Title}}" /></a>
 {{ end }}
 </section>
+<div id="slideshow_button_container"><button id="slideshow_button">Open Gallery As Slideshow</button></div>
 </div>
+
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="pswp__bg"></div>
+	<div class="pswp__scroll-wrap">
+		<div class="pswp__container">
+			<div class="pswp__item"></div>
+			<div class="pswp__item"></div>
+			<div class="pswp__item"></div>
+		</div>
+		<div class="pswp__ui pswp__ui--hidden">
+			<div class="pswp__top-bar">
+				<div class="pswp__counter"></div>
+				<button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+				<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+				<div class="pswp__preloader">
+					<div class="pswp__preloader__icn">
+						<div class="pswp__preloader__cut">
+							<div class="pswp__preloader__donut"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+				<div class="pswp__share-tooltip"></div>
+			</div>
+			<button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+			</button>
+			<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+			</button>
+			<div class="pswp__caption">
+				<div class="pswp__caption__center"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+var openPhotoSwipe = function() {
+	var pswpElement = document.querySelectorAll('.pswp')[0];
+
+	// build items array
+	var items = [
+{{ range .Photos }}
+{ src: '/images/photos/{{ .File }}', w: {{ .Width }}, h: {{ .Height }}, title: '{{ .Title }}' },
+{{ end }}
+	];
+
+	// define options (if needed)
+	var options = {
+		history: false,
+		focus: false,
+
+		showAnimationDuration: 0,
+		hideAnimationDuration: 0
+	};
+
+	var gallery = new PhotoSwipe( pswpElement, PhotoSwipeUI_Default, items, options);
+	gallery.init();
+};
+
+document.getElementById('slideshow_button').onclick = openPhotoSwipe;
+</script>
+
+
 {{ end }}
 
 {{ if .Sources -}}
@@ -188,7 +258,7 @@ categories:
 </div>
 `
 
-const OldPhotoCode string = `
+const oldPhotoCode string = `
 {{ if .Photos }}
 <div id="photos">
 <table class="photos_table">
