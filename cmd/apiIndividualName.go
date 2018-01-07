@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/tektsu/gedcom"
 )
@@ -14,7 +15,7 @@ type individualNameResponse struct {
 	Citations []int  `json:"citations"`
 }
 
-func newIndividualNameResponse(name *gedcom.NameRecord, ccb citationSubCallback) (*individualNameResponse, error) {
+func (ic *individualControl) newIndividualNameResponse(name *gedcom.NameRecord) (*individualNameResponse, error) {
 
 	given, family := extractNames(name.Name)
 	response := &individualNameResponse{
@@ -22,8 +23,28 @@ func newIndividualNameResponse(name *gedcom.NameRecord, ccb citationSubCallback)
 		Last:      family,
 		Full:      fmt.Sprintf("%s %s", given, family),
 		LastFirst: fmt.Sprintf("%s, %s", family, given),
-		Citations: ccb(name.Citation),
+		Citations: ic.addCitations(name.Citation),
 	}
 
 	return response, nil
+}
+
+func (ic *individualControl) addNames() error {
+	for i, n := range ic.individual.Name {
+
+		nameResponse, err := ic.newIndividualNameResponse(n)
+		if err != nil {
+			return err
+		}
+
+		if i == 0 {
+			ic.response.Name = nameResponse
+		} else {
+			ic.response.Aliases = append(ic.response.Aliases, nameResponse)
+		}
+	}
+	ic.response.Name.Citations = append(ic.response.Name.Citations, ic.addCitations(ic.individual.Citation)...) // Append general citations to the primary name
+	sort.Ints(ic.response.Name.Citations)
+
+	return nil
 }

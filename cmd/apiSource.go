@@ -40,19 +40,19 @@ func newSourceResponses() (sourceResponses, error) {
 	return responses, nil
 }
 
-func newSourceResponsesFromGedcom(gc *gedcom.Gedcom) (sourceResponses, error) {
-	responses, err := newSourceResponses()
-	if err != nil {
-		return responses, err
+func (api *apiResponse) addSources() error {
+
+	for _, source := range api.gc.Source {
+		err := api.addSource(source)
+		if err != nil {
+			return err
+		}
 	}
-	err = responses.addAll(gc.Source)
-	if err != nil {
-		return responses, err
-	}
-	return responses, nil
+
+	return nil
 }
 
-func (s sourceResponses) add(source *gedcom.SourceRecord) (*sourceResponse, error) {
+func (api *apiResponse) addSource(source *gedcom.SourceRecord) error {
 
 	response := &sourceResponse{
 		ID:        strings.ToLower(source.Xref),
@@ -62,15 +62,15 @@ func (s sourceResponses) add(source *gedcom.SourceRecord) (*sourceResponse, erro
 		Citations: make(sourceCitationResponses),
 	}
 
-	if _, ok := s[response.ID]; ok {
-		return response, fmt.Errorf("In creating source record [%+v], id is already used: [%+v]", source, s[response.ID])
+	if _, ok := api.sources[response.ID]; ok {
+		return fmt.Errorf("In creating source record [%+v], id is already used: [%+v]", source, api.sources[response.ID])
 	}
 
 	re := regexp.MustCompile("[0-9]+")
 	matches := re.FindAllString(source.Xref, 1)
 	v, err := strconv.Atoi(matches[0])
 	if err != nil {
-		panic(fmt.Sprintf("Error converting [%s] to integer", matches[0]))
+		return fmt.Errorf("Error converting [%s] to integer", matches[0])
 	}
 	response.RefNum = v
 
@@ -96,19 +96,7 @@ func (s sourceResponses) add(source *gedcom.SourceRecord) (*sourceResponse, erro
 		}
 	}
 
-	s[response.ID] = response
-
-	return response, nil
-}
-
-func (s sourceResponses) addAll(sources []*gedcom.SourceRecord) error {
-
-	for _, source := range sources {
-		_, err := s.add(source)
-		if err != nil {
-			return err
-		}
-	}
+	api.sources[response.ID] = response
 
 	return nil
 }

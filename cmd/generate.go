@@ -188,7 +188,12 @@ func generateAPI(cx *cli.Context, gc *gedcom.Gedcom) error {
 
 	project := cx.String("project")
 
-	api, err := buildAPIResponseFromGedcom(cx, gc)
+	api := newAPIResponse(cx)
+
+	err := api.buildFromGedcom(gc)
+	if err != nil {
+		return err
+	}
 
 	// Generate source api responses.
 	sourceAPIDir := filepath.Join(project, "static", "api", "source")

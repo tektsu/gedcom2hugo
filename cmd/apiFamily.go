@@ -1,42 +1,20 @@
 package cmd
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/tektsu/gedcom"
 )
 
-type familyMemberResponse struct {
-	ID        string `json:"id"`
-	Sex       string `json:"sex"`
-	Name      string `json:"name"`
-	Citations []int  `json:"citations"`
-}
-
-func newFamilyMemberResponse(i *gedcom.IndividualRecord, ccb citationSubCallback) (*familyMemberResponse, error) {
-	child := &familyMemberResponse{
-		ID:        strings.ToLower(i.Xref),
-		Sex:       i.Sex,
-		Citations: ccb(i.Name[0].Citation),
-	}
-	given, family := extractNames(i.Name[0].Name)
-	child.Name = fmt.Sprintf("%s %s", given, family)
-
-	return child, nil
-}
-
 type familyResponse struct {
-	ID        string                  `json:"id"`
-	Pedigree  string                  `json:"pedigree"`
-	AdoptedBy string                  `json:"adoptedby"`
-	Events    []*eventResponse        `json:"events"`
-	Mother    *familyMemberResponse   `json:"mother"`
-	Father    *familyMemberResponse   `json:"father"`
-	Children  []*familyMemberResponse `json:"children"`
+	ID        string                         `json:"id"`
+	Pedigree  string                         `json:"pedigree"`
+	AdoptedBy string                         `json:"adoptedby"`
+	Events    []*eventResponse               `json:"events"`
+	Mother    *individualReferenceResponse   `json:"mother"`
+	Father    *individualReferenceResponse   `json:"father"`
+	Children  []*individualReferenceResponse `json:"children"`
 }
 
-func newFamilyResponse(flr *gedcom.FamilyLinkRecord, ccb citationSubCallback) (*familyResponse, error) {
+func (ic *individualControl) newFamilyResponse(flr *gedcom.FamilyLinkRecord) (*familyResponse, error) {
 
 	if flr.Family == nil {
 		return nil, nil
@@ -49,7 +27,7 @@ func newFamilyResponse(flr *gedcom.FamilyLinkRecord, ccb citationSubCallback) (*
 	}
 
 	if flr.Family.Husband != nil {
-		father, err := newFamilyMemberResponse(flr.Family.Husband, ccb)
+		father, err := ic.newIndividualReferenceResponse(flr.Family.Husband)
 		if err != nil {
 			return response, err
 		}
@@ -57,7 +35,7 @@ func newFamilyResponse(flr *gedcom.FamilyLinkRecord, ccb citationSubCallback) (*
 	}
 
 	if flr.Family.Wife != nil {
-		mother, err := newFamilyMemberResponse(flr.Family.Wife, ccb)
+		mother, err := ic.newIndividualReferenceResponse(flr.Family.Wife)
 		if err != nil {
 			return response, err
 		}
@@ -65,7 +43,7 @@ func newFamilyResponse(flr *gedcom.FamilyLinkRecord, ccb citationSubCallback) (*
 	}
 
 	for _, i := range flr.Family.Child {
-		child, err := newFamilyMemberResponse(i.Person, ccb)
+		child, err := ic.newIndividualReferenceResponse(i.Person)
 		if err != nil {
 			return response, err
 		}
@@ -73,7 +51,7 @@ func newFamilyResponse(flr *gedcom.FamilyLinkRecord, ccb citationSubCallback) (*
 	}
 
 	for _, e := range flr.Family.Event {
-		event, err := newEventResponse(e, ccb)
+		event, err := ic.newEventResponse(e)
 		if err != nil {
 			return response, err
 		}
@@ -81,4 +59,32 @@ func newFamilyResponse(flr *gedcom.FamilyLinkRecord, ccb citationSubCallback) (*
 	}
 
 	return response, nil
+}
+
+func (ic *individualControl) addParentFamilies() error {
+	for _, fr := range ic.individual.Parents {
+		if fr.Family != nil {
+			family, err := ic.newFamilyResponse(fr)
+			if err != nil {
+				return err
+			}
+			ic.response.ParentsFamily = append(ic.response.ParentsFamily, family)
+		}
+	}
+
+	return nil
+}
+
+func (ic *individualControl) addFamilies() error {
+	for _, fr := range ic.individual.Family {
+		if fr.Family != nil {
+			family, err := ic.newFamilyResponse(fr)
+			if err != nil {
+				return err
+			}
+			ic.response.Family = append(ic.response.Family, family)
+		}
+	}
+
+	return nil
 }

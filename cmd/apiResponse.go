@@ -23,77 +23,134 @@ type citationCallback func(string, []*gedcom.CitationRecord)
 type citationSubCallback func([]*gedcom.CitationRecord) []int
 type photoCallback func(*gedcom.ObjectRecord, *individualResponse) *photoResponse
 
-func buildAPIResponseFromGedcom(c *cli.Context, g *gedcom.Gedcom) (*apiResponse, error) {
-
+func newAPIResponse(c *cli.Context) *apiResponse {
 	response := &apiResponse{
-		cx:     c,
-		gc:     g,
-		photos: make(photoResponses),
+		cx:          c,
+		sources:     make(sourceResponses),
+		individuals: make(individualResponses),
+		photos:      make(photoResponses),
 	}
+
+	return response
+}
+
+func (api *apiResponse) addCitations(individualID string, citations []*gedcom.CitationRecord) {
+	for _, citation := range citations {
+		sourceID := strings.ToLower(citation.Source.Xref)
+		var c *sourceCitationResponse
+		if _, ok := api.sources[sourceID].Citations[citation.Page]; ok {
+			c = api.sources[sourceID].Citations[citation.Page]
+		} else {
+			c = newCitationResponse()
+			api.sources[sourceID].Citations[citation.Page] = c
+		}
+		c.Individuals[individualID] = true
+	}
+}
+
+func (api *apiResponse) addPhoto(o *gedcom.ObjectRecord, i *individualResponse) *photoResponse {
+	key := getPhotoKeyFromObject(o)
+	if _, ok := api.photos[key]; !ok {
+		api.photos[key] = &photoResponse{
+			ID:    key,
+			File:  filepath.Base(o.File.Name),
+			Title: o.File.Title,
+			//People: make(photoPersonIndex),
+		}
+
+		file, err := os.Open(o.File.Name)
+		defer file.Close()
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			return api.photos[key]
+		}
+
+		image, _, err := image.DecodeConfig(file) // Image Struct
+		if err != nil {
+			fmt.Printf("%s: %v\n", o.File.Name, err)
+			return api.photos[key]
+		}
+
+		api.photos[key].Width = image.Width
+		api.photos[key].Height = image.Height
+	}
+
+	//if _, ok := response.photos[key].Persons[person.Xref]; !ok {
+	//response.photos[key].Persons[person.Xref] = newPersonRef(person)
+	//}
+
+	return api.photos[key]
+
+}
+
+func (api *apiResponse) buildFromGedcom(g *gedcom.Gedcom) error {
+
+	api.gc = g
 
 	var err error
 
-	response.sources, err = newSourceResponsesFromGedcom(g)
+	err = api.addSources()
 	if err != nil {
-		return response, err
+		return err
 	}
 
 	// Callback for individual citations.
-	iccb := func(individualID string, citations []*gedcom.CitationRecord) {
-		for _, citation := range citations {
-			sourceID := strings.ToLower(citation.Source.Xref)
-			var c *sourceCitationResponse
-			if _, ok := response.sources[sourceID].Citations[citation.Page]; ok {
-				c = response.sources[sourceID].Citations[citation.Page]
-			} else {
-				c = newCitationResponse()
-				response.sources[sourceID].Citations[citation.Page] = c
-			}
-			c.Individuals[individualID] = true
-		}
-	}
+	//iccb := func(individualID string, citations []*gedcom.CitationRecord) {
+	//for _, citation := range citations {
+	//sourceID := strings.ToLower(citation.Source.Xref)
+	//var c *sourceCitationResponse
+	//if _, ok := api.sources[sourceID].Citations[citation.Page]; ok {
+	//c = api.sources[sourceID].Citations[citation.Page]
+	//} else {
+	//c = newCitationResponse()
+	//api.sources[sourceID].Citations[citation.Page] = c
+	//}
+	//c.Individuals[individualID] = true
+	//}
+	//}
 
 	// Callback for photos.
-	photocb := func(o *gedcom.ObjectRecord, i *individualResponse) *photoResponse {
-		key := getPhotoKeyFromObject(o)
-		if _, ok := response.photos[key]; !ok {
-			response.photos[key] = &photoResponse{
-				ID:    key,
-				File:  filepath.Base(o.File.Name),
-				Title: o.File.Title,
-				//People: make(photoPersonIndex),
-			}
+	//photocb := func(o *gedcom.ObjectRecord, i *individualResponse) *photoResponse {
+	//key := getPhotoKeyFromObject(o)
+	//if _, ok := api.photos[key]; !ok {
+	//api.photos[key] = &photoResponse{
+	//ID:    key,
+	//File:  filepath.Base(o.File.Name),
+	//Title: o.File.Title,
+	////People: make(photoPersonIndex),
+	//}
 
-			file, err := os.Open(o.File.Name)
-			defer file.Close()
-			if err != nil {
-				fmt.Printf("%v\n", err)
-				return response.photos[key]
-			}
+	//file, err := os.Open(o.File.Name)
+	//defer file.Close()
+	//if err != nil {
+	//fmt.Printf("%v\n", err)
+	//return api.photos[key]
+	//}
 
-			image, _, err := image.DecodeConfig(file) // Image Struct
-			if err != nil {
-				fmt.Printf("%s: %v\n", o.File.Name, err)
-				return response.photos[key]
-			}
+	//image, _, err := image.DecodeConfig(file) // Image Struct
+	//if err != nil {
+	//fmt.Printf("%s: %v\n", o.File.Name, err)
+	//return api.photos[key]
+	//}
 
-			response.photos[key].Width = image.Width
-			response.photos[key].Height = image.Height
-		}
+	//api.photos[key].Width = image.Width
+	//api.photos[key].Height = image.Height
+	//}
 
-		//if _, ok := response.photos[key].Persons[person.Xref]; !ok {
-		//response.photos[key].Persons[person.Xref] = newPersonRef(person)
-		//}
+	////if _, ok := response.photos[key].Persons[person.Xref]; !ok {
+	////response.photos[key].Persons[person.Xref] = newPersonRef(person)
+	////}
 
-		return response.photos[key]
+	//return api.photos[key]
 
-	}
+	//}
 
-	response.individuals, err = newIndividualResponses()
-	err = response.individuals.addAll(g.Individual, iccb, photocb)
+	//api.individuals, err = newIndividualResponses()
+	//err = api.individuals.addAll(g.Individual, iccb, photocb)
+	err = api.addIndividuals()
 	if err != nil {
-		return response, err
+		return err
 	}
 
-	return response, nil
+	return nil
 }

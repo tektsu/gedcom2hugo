@@ -27,156 +27,124 @@ type individualResponse struct {
 
 type individualResponses map[string]*individualResponse
 
-func newIndividualResponses() (individualResponses, error) {
-	responses := make(individualResponses)
-	return responses, nil
-}
-
-func (r individualResponses) add(individual *gedcom.IndividualRecord, iccb citationCallback, photocb photoCallback) (*individualResponse, error) {
-
-	citationCount := 0
-	citationIndex := make(map[string]int)
-
-	response := &individualResponse{
-		ID:        strings.ToLower(individual.Xref),
-		Sex:       individual.Sex,
-		Citations: make(citationResponses),
-	}
-	if individual.Sex != "M" && individual.Sex != "F" {
-		individual.Sex = "U"
-	}
-
-	if _, ok := r[response.ID]; ok {
-		return response, fmt.Errorf("In creating individual record [%+v], id is already used: [%+v]", individual, r[response.ID])
-	}
-
-	// Callback function for citations
-	ccb := func(citations []*gedcom.CitationRecord) []int {
-		iccb(response.ID, citations)
-
-		var citationList []int
-		for _, citation := range citations {
-			indexKey := fmt.Sprintf("%s:%s", citation.Source.Xref, citation.Page)
-			var citationNumber int
-			var exists bool
-			if citationNumber, exists = citationIndex[indexKey]; !exists {
-				citationCount++
-				citationNumber = citationCount
-				citationIndex[indexKey] = citationNumber
-				response.Citations[citationNumber] = &citationResponse{
-					ID:        citationNumber,
-					SourceID:  strings.ToLower(citation.Source.Xref),
-					SourceRef: citation.Source.GetReferenceString(),
-					Detail:    citation.Page,
-				}
-			}
-			citationList = append(citationList, citationNumber)
-		}
-
-		sort.Ints(citationList)
-		return citationList
-	}
-
-	// Add in the person's names.
-	for i, n := range individual.Name {
-
-		nameResponse, err := newIndividualNameResponse(n, ccb)
-		if err != nil {
-			return response, err
-		}
-
-		if i == 0 {
-			response.Name = nameResponse
-		} else {
-			response.Aliases = append(response.Aliases, nameResponse)
-		}
-	}
-	response.Name.Citations = append(response.Name.Citations, ccb(individual.Citation)...) // Append general citations to the primary name
-	sort.Ints(response.Name.Citations)
-
-	// Add in personal attributes.
-	for _, r := range individual.Attribute {
-
-		if r.Tag == "SSN" { // Skip social security number.
-			continue
-		}
-		eventResponse, err := newEventResponse(r, ccb)
-		if err != nil {
-			return response, err
-		}
-		response.Attributes = append(response.Attributes, eventResponse)
-	}
-
-	// Add in personal events.
-	for _, r := range individual.Event {
-
-		if r.Tag == "Photo" {
-			continue
-		}
-		eventResponse, err := newEventResponse(r, ccb)
-		if err != nil {
-			return response, err
-		}
-		if eventResponse.Name == "Birth" {
-			response.Birth = eventResponse.Date
-		}
-		if eventResponse.Name == "Death" {
-			response.Death = eventResponse.Date
-		}
-		response.Events = append(response.Events, eventResponse)
-	}
-
-	// Add in the parent's families.
-	for _, fr := range individual.Parents {
-		if fr.Family != nil {
-			family, err := newFamilyResponse(fr, ccb)
-			if err != nil {
-				return response, err
-			}
-			response.ParentsFamily = append(response.ParentsFamily, family)
-		}
-	}
-
-	// Add in the families.
-	for _, fr := range individual.Family {
-		if fr.Family != nil {
-			family, err := newFamilyResponse(fr, ccb)
-			if err != nil {
-				return response, err
-			}
-			response.Family = append(response.Family, family)
-		}
-	}
-
-	// Add in photos
-	for _, o := range individual.Object {
-
-		if o.File.Form != "jpg" && o.File.Form != "png" {
-			continue
-		}
-		p := photocb(o, response)
-		response.Photos = append(response.Photos, p)
-	}
-
-	// Get Top photo
-	if individual.Photo != nil {
-		p := photocb(individual.Photo, response)
-		response.TopPhoto = p
-	}
-
-	r[response.ID] = response
-
-	return response, nil
-}
-
-func (r individualResponses) addAll(individuals []*gedcom.IndividualRecord, iccb citationCallback, photocb photoCallback) error {
-
-	for _, individual := range individuals {
-		_, err := r.add(individual, iccb, photocb)
+func (api *apiResponse) addIndividuals() error {
+	for _, individual := range api.gc.Individual {
+		err := api.addIndividual(individual)
 		if err != nil {
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (api *apiResponse) addIndividual(individual *gedcom.IndividualRecord) error {
+	ic := newIndividualControl(api)
+	err := ic.build(individual)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type individualControl struct {
+	api           *apiResponse
+	citationCount int
+	citationIndex map[string]int
+	individual    *gedcom.IndividualRecord
+	response      *individualResponse
+}
+
+func newIndividualControl(api *apiResponse) *individualControl {
+	ic := &individualControl{
+		api:           api,
+		citationCount: 0,
+		citationIndex: make(map[string]int),
+	}
+
+	return ic
+}
+
+func (ic *individualControl) addCitations(citations []*gedcom.CitationRecord) []int {
+	ic.api.addCitations(ic.response.ID, citations)
+
+	var citationList []int
+	for _, citation := range citations {
+		indexKey := fmt.Sprintf("%s:%s", citation.Source.Xref, citation.Page)
+		var citationNumber int
+		var exists bool
+		if citationNumber, exists = ic.citationIndex[indexKey]; !exists {
+			ic.citationCount++
+			citationNumber = ic.citationCount
+			ic.citationIndex[indexKey] = citationNumber
+			ic.response.Citations[citationNumber] = &citationResponse{
+				ID:        citationNumber,
+				SourceID:  strings.ToLower(citation.Source.Xref),
+				SourceRef: citation.Source.GetReferenceString(),
+				Detail:    citation.Page,
+			}
+		}
+		citationList = append(citationList, citationNumber)
+	}
+
+	sort.Ints(citationList)
+	return citationList
+}
+
+func (ic *individualControl) build(individual *gedcom.IndividualRecord) error {
+	ic.individual = individual
+	ic.response = &individualResponse{
+		ID:        strings.ToLower(individual.Xref),
+		Sex:       individual.Sex,
+		Citations: make(citationResponses),
+	}
+	if ic.response.Sex != "M" && ic.response.Sex != "F" {
+		ic.response.Sex = "U"
+	}
+
+	if _, ok := ic.api.individuals[ic.response.ID]; ok {
+		return fmt.Errorf("In creating individual record [%+v], id is already used: [%+v]", individual, ic.api.individuals[ic.response.ID])
+	}
+
+	var err error
+
+	err = ic.addNames()
+	if err != nil {
+		return err
+	}
+
+	err = ic.addAttributes()
+	if err != nil {
+		return err
+	}
+
+	err = ic.addEvents()
+	if err != nil {
+		return err
+	}
+
+	err = ic.addParentFamilies()
+	if err != nil {
+		return err
+	}
+
+	err = ic.addFamilies()
+	if err != nil {
+		return err
+	}
+
+	err = ic.addPhotos()
+	if err != nil {
+		return err
+	}
+
+	err = ic.addTopPhoto()
+	if err != nil {
+		return err
+	}
+
+	ic.api.individuals[ic.response.ID] = ic.response
 
 	return nil
 }

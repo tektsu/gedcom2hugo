@@ -12,7 +12,7 @@ type eventResponse struct {
 	Citations []int  `json:"citations"`
 }
 
-func newEventResponse(event *gedcom.EventRecord, ccb citationSubCallback) (*eventResponse, error) {
+func (ic *individualControl) newEventResponse(event *gedcom.EventRecord) (*eventResponse, error) {
 
 	response := &eventResponse{
 		Name:      event.Tag,
@@ -21,7 +21,7 @@ func newEventResponse(event *gedcom.EventRecord, ccb citationSubCallback) (*even
 		Type:      event.Type,
 		Date:      event.Date,
 		Place:     event.Place.Name,
-		Citations: ccb(event.Citation),
+		Citations: ic.addCitations(event.Citation),
 	}
 	if response.Tag == "EVEN" && response.Type != "" {
 		response.Name = response.Type
@@ -31,7 +31,46 @@ func newEventResponse(event *gedcom.EventRecord, ccb citationSubCallback) (*even
 		response.Name = name
 	}
 
-	response.Citations = append(response.Citations, ccb(event.Place.Citation)...) // Append place citations to the event
+	response.Citations = append(response.Citations, ic.addCitations(event.Place.Citation)...) // Append place citations to the event
 
 	return response, nil
+}
+
+func (ic *individualControl) addAttributes() error {
+	for _, r := range ic.individual.Attribute {
+
+		if r.Tag == "SSN" { // Skip social security number.
+			continue
+		}
+		eventResponse, err := ic.newEventResponse(r)
+		if err != nil {
+			return err
+		}
+		ic.response.Attributes = append(ic.response.Attributes, eventResponse)
+	}
+
+	return nil
+}
+
+func (ic *individualControl) addEvents() error {
+	for _, r := range ic.individual.Event {
+
+		if r.Tag == "Photo" {
+			continue
+		}
+		eventResponse, err := ic.newEventResponse(r)
+		if err != nil {
+			return err
+		}
+		if eventResponse.Name == "Birth" {
+			ic.response.Birth = eventResponse.Date
+		}
+		if eventResponse.Name == "Death" {
+			ic.response.Death = eventResponse.Date
+		}
+
+		ic.response.Events = append(ic.response.Events, eventResponse)
+	}
+
+	return nil
 }
