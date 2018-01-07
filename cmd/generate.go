@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -173,6 +174,98 @@ func Generate(cx *cli.Context) error {
 			return cli.NewExitError(err, 1)
 		}
 		err = tpl.Execute(fh, newPhotoTmplData(photo))
+	}
+
+	err = generateAPI(cx, gc)
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+
+	return nil
+}
+
+func generateAPI(cx *cli.Context, gc *gedcom.Gedcom) error {
+
+	project := cx.String("project")
+
+	api, err := buildAPIResponseFromGedcom(cx, gc)
+
+	// Generate source api responses.
+	sourceAPIDir := filepath.Join(project, "static", "api", "source")
+	err = os.MkdirAll(sourceAPIDir, 0777)
+	if err != nil {
+		return err
+	}
+	for id, source := range api.sources {
+		file := filepath.Join(sourceAPIDir, strings.ToLower(id+".json"))
+		fh, err := os.Create(file)
+		if err != nil {
+			return err
+		}
+		defer fh.Close()
+
+		j, err := json.Marshal(source)
+		if err != nil {
+			return err
+		}
+		_, err = fh.Write(j)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Generate individual api responses.
+	individualAPIDir := filepath.Join(project, "static", "api", "individual")
+	err = os.MkdirAll(individualAPIDir, 0777)
+	if err != nil {
+		return err
+	}
+	for id, individual := range api.individuals {
+		file := filepath.Join(individualAPIDir, strings.ToLower(id+".json"))
+		fh, err := os.Create(file)
+		if err != nil {
+			return err
+		}
+		defer fh.Close()
+
+		j, err := json.Marshal(individual)
+		if err != nil {
+			return err
+		}
+		_, err = fh.Write(j)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Generate photo api responses.
+	photoAPIDir := filepath.Join(project, "static", "api", "photo")
+	err = os.MkdirAll(photoAPIDir, 0777)
+	if err != nil {
+		return err
+	}
+	for id, photo := range api.photos {
+		file := filepath.Join(photoAPIDir, strings.ToLower(id+".json"))
+		fh, err := os.Create(file)
+		if err != nil {
+			return err
+		}
+		defer fh.Close()
+
+		j, err := json.Marshal(photo)
+		if err != nil {
+			return err
+		}
+		_, err = fh.Write(j)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Configure for JSON headers.
+	err = ioutil.WriteFile("static/api/_headers", []byte("/*  Access-Control-Allow-Origin: *  content-type: application/json; charset=utf-8"), 0644)
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -16,6 +16,7 @@ type personIndex map[string]*personIndexEntry
 // alphabetical order of the names.
 type personIndexEntry struct {
 	AlphaWeight int64
+	Sex,
 	GivenName,
 	FamilyName,
 	FullName,
@@ -29,12 +30,13 @@ func newPersonIndexEntry(i *gedcom.IndividualRecord) *personIndexEntry {
 	r := &personIndexEntry{Living: false}
 
 	if len(i.Name) > 0 {
+		r.Sex = i.Sex
 		given, family := extractNames(i.Name[0].Name)
 		r.GivenName = given
 		r.FamilyName = family
 		r.FullName = fmt.Sprintf("%s %s", given, family)
 		r.LastNameFirst = fmt.Sprintf("%s, %s", family, given)
-		if given == "(Living)" {
+		if given == "(Living)" || given == "Living" {
 			r.Living = true
 		}
 	}
