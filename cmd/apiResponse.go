@@ -72,14 +72,13 @@ func (api *apiResponse) addFamilyCitations(familyID string, citations []*gedcom.
 	return nil
 }
 
-func (api *apiResponse) addPhoto(o *gedcom.ObjectRecord, i *individualResponse) *photoResponse {
+func (api *apiResponse) addPhoto(o *gedcom.ObjectRecord) *photoResponse {
 	key := getPhotoKeyFromObject(o)
 	if _, ok := api.photos[key]; !ok {
 		api.photos[key] = &photoResponse{
 			ID:    key,
 			File:  filepath.Base(o.File.Name),
 			Title: o.File.Title,
-			//People: make(photoPersonIndex),
 		}
 
 		file, err := os.Open(o.File.Name)
@@ -99,15 +98,33 @@ func (api *apiResponse) addPhoto(o *gedcom.ObjectRecord, i *individualResponse) 
 		api.photos[key].Height = image.Height
 	}
 
+	return api.photos[key]
+}
+
+func (api *apiResponse) addPhotoForIndividual(o *gedcom.ObjectRecord, i *individualResponse) *photoResponse {
+	response := api.addPhoto(o)
+
 	ir, err := api.getIndividualIndexEntry(i.ID)
 	if err != nil {
 		fmt.Printf("%s\n", err)
-		return api.photos[key]
+		return response
 	}
-	api.photos[key].People = append(api.photos[key].People, ir)
+	response.People = append(response.People, ir)
 
-	return api.photos[key]
+	return response
+}
 
+func (api *apiResponse) addPhotoForFamily(o *gedcom.ObjectRecord, f *familyResponse) *photoResponse {
+	response := api.addPhoto(o)
+
+	fr, err := api.getFamilyIndexEntry(f.ID)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		return response
+	}
+	response.Families = append(response.Families, fr)
+
+	return response
 }
 
 func (api *apiResponse) buildFromGedcom(g *gedcom.Gedcom) error {
