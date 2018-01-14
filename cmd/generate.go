@@ -207,16 +207,18 @@ func generateAPI(cx *cli.Context, gc *gedcom.Gedcom) error {
 		if err != nil {
 			return err
 		}
-		defer fh.Close()
 
 		j, err := json.Marshal(source)
 		if err != nil {
+			fh.Close()
 			return err
 		}
 		_, err = fh.Write(j)
 		if err != nil {
+			fh.Close()
 			return err
 		}
+		fh.Close()
 	}
 
 	// Generate individual api responses.
@@ -231,16 +233,44 @@ func generateAPI(cx *cli.Context, gc *gedcom.Gedcom) error {
 		if err != nil {
 			return err
 		}
-		defer fh.Close()
 
 		j, err := json.Marshal(individual)
 		if err != nil {
+			fh.Close()
 			return err
 		}
 		_, err = fh.Write(j)
 		if err != nil {
+			fh.Close()
 			return err
 		}
+		fh.Close()
+	}
+
+	// Generate family api responses.
+	familyAPIDir := filepath.Join(project, "static", "api", "family")
+	err = os.MkdirAll(familyAPIDir, 0777)
+	if err != nil {
+		return err
+	}
+	for id, family := range api.families {
+		file := filepath.Join(familyAPIDir, strings.ToLower(id+".json"))
+		fh, err := os.Create(file)
+		if err != nil {
+			return err
+		}
+
+		j, err := json.Marshal(family)
+		if err != nil {
+			fh.Close()
+			return err
+		}
+		_, err = fh.Write(j)
+		if err != nil {
+			fh.Close()
+			return err
+		}
+		fh.Close()
 	}
 
 	// Generate photo api responses.
@@ -255,16 +285,18 @@ func generateAPI(cx *cli.Context, gc *gedcom.Gedcom) error {
 		if err != nil {
 			return err
 		}
-		defer fh.Close()
 
 		j, err := json.Marshal(photo)
 		if err != nil {
+			fh.Close()
 			return err
 		}
 		_, err = fh.Write(j)
 		if err != nil {
+			fh.Close()
 			return err
 		}
+		fh.Close()
 	}
 
 	// Configure for JSON headers.

@@ -63,13 +63,53 @@ func (ic *individualControl) addEvents() error {
 			return err
 		}
 		if eventResponse.Name == "Birth" {
-			ic.response.Birth = eventResponse.Date
+			ic.response.Ref.Birth = eventResponse.Date
 		}
 		if eventResponse.Name == "Death" {
-			ic.response.Death = eventResponse.Date
+			ic.response.Ref.Death = eventResponse.Date
 		}
 
 		ic.response.Events = append(ic.response.Events, eventResponse)
+	}
+
+	return nil
+}
+
+func (fc *familyControl) newEventResponse(event *gedcom.EventRecord) (*eventResponse, error) {
+
+	response := &eventResponse{
+		Name:      event.Tag,
+		Tag:       event.Tag,
+		Value:     event.Value,
+		Type:      event.Type,
+		Date:      event.Date,
+		Place:     event.Place.Name,
+		Citations: fc.addCitations(event.Citation),
+	}
+	if response.Tag == "EVEN" && response.Type != "" {
+		response.Name = response.Type
+	}
+	name, exists := tagTable[response.Name]
+	if exists {
+		response.Name = name
+	}
+
+	response.Citations = append(response.Citations, fc.addCitations(event.Place.Citation)...) // Append place citations to the event
+
+	return response, nil
+}
+
+func (fc *familyControl) addEvents() error {
+	for _, r := range fc.family.Event {
+
+		eventResponse, err := fc.newEventResponse(r)
+		if err != nil {
+			return err
+		}
+		if eventResponse.Tag == "MARR" {
+			fc.response.Ref.Married = eventResponse.Date
+		}
+		fc.response.Events = append(fc.response.Events, eventResponse)
 	}
 
 	return nil

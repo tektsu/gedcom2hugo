@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -9,19 +10,17 @@ import (
 )
 
 type individualResponse struct {
-	ID            string                    `json:"id"`
-	Sex           string                    `json:"sex"`
-	Birth         string                    `json:"birth"`
-	Death         string                    `json:"death"`
-	Name          *individualNameResponse   `json:"name"`
-	Aliases       []*individualNameResponse `json:"aliases"`
-	Events        []*eventResponse          `json:"events"`
-	Attributes    []*eventResponse          `json:"attributes"`
-	ParentsFamily []*familyResponse         `json:"parentsfamily"`
-	Family        []*familyResponse         `json:"family"`
-	TopPhoto      *photoResponse            `json:"topphoto"`
-	Photos        []*photoResponse          `json:"photos"`
-	Citations     citationResponses         `json:"citations"`
+	ID            string                       `json:"id"`
+	Ref           *individualReferenceResponse `json:"ref"`
+	Name          *individualNameResponse      `json:"name"`
+	Aliases       []*individualNameResponse    `json:"aliases"`
+	Events        []*eventResponse             `json:"events"`
+	Attributes    []*eventResponse             `json:"attributes"`
+	ParentsFamily []*familyLinkResponse        `json:"parentsfamily"`
+	Family        []*familyLinkResponse        `json:"family"`
+	TopPhoto      *photoResponse               `json:"topphoto"`
+	Photos        []*photoResponse             `json:"photos"`
+	Citations     citationResponses            `json:"citations"`
 	//LastNames     []string
 }
 
@@ -67,7 +66,7 @@ func newIndividualControl(api *apiResponse) *individualControl {
 }
 
 func (ic *individualControl) addCitations(citations []*gedcom.CitationRecord) []int {
-	ic.api.addCitations(ic.response.ID, citations)
+	ic.api.addIndividualCitations(ic.response.ID, citations)
 
 	var citationList []int
 	for _, citation := range citations {
@@ -93,21 +92,31 @@ func (ic *individualControl) addCitations(citations []*gedcom.CitationRecord) []
 }
 
 func (ic *individualControl) build(individual *gedcom.IndividualRecord) error {
+	var err error
+
 	ic.individual = individual
 	ic.response = &individualResponse{
 		ID:        strings.ToLower(individual.Xref),
-		Sex:       individual.Sex,
 		Citations: make(citationResponses),
 	}
-	if ic.response.Sex != "M" && ic.response.Sex != "F" {
-		ic.response.Sex = "U"
+	ic.response.Ref, err = ic.api.getIndividualIndexEntry(strings.ToLower(individual.Xref))
+	if err != nil {
+		return err
+	}
+	ic.response.Ref.Sex = individual.Sex
+	if ic.response.Ref.Sex != "M" && ic.response.Ref.Sex != "F" {
+		ic.response.Ref.Sex = "U"
+	}
+	given, family := extractNames(individual.Name[0].Name)
+	ic.response.Ref.Name = fmt.Sprintf("%s %s", given, family)
+
+	if individual.Photo != nil {
+		ic.response.Ref.Photo = filepath.Base(individual.Photo.File.Name)
 	}
 
 	if _, ok := ic.api.individuals[ic.response.ID]; ok {
 		return fmt.Errorf("In creating individual record [%+v], id is already used: [%+v]", individual, ic.api.individuals[ic.response.ID])
 	}
-
-	var err error
 
 	err = ic.addNames()
 	if err != nil {

@@ -11,12 +11,14 @@ import (
 )
 
 type sourceCitationResponse struct {
-	Individuals map[string]bool `json:"individuals"`
+	Individuals map[string]*individualReferenceResponse `json:"individuals"`
+	Families    map[string]*familyReferenceResponse     `json:"families"`
 }
 
 func newCitationResponse() *sourceCitationResponse {
 	return &sourceCitationResponse{
-		Individuals: make(map[string]bool),
+		Individuals: make(map[string]*individualReferenceResponse),
+		Families:    make(map[string]*familyReferenceResponse),
 	}
 }
 
