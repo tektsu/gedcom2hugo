@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/tektsu/gedcom"
 	"github.com/urfave/cli"
 )
@@ -131,8 +130,6 @@ func (api *apiResponse) buildFromGedcom(g *gedcom.Gedcom) error {
 	if err != nil {
 		return err
 	}
-
-	spew.Dump(api.famIndex)
 
 	return nil
 }
