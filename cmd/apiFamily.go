@@ -1,7 +1,11 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"html/template"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -70,6 +74,9 @@ func (api *apiResponse) addFamily(family *gedcom.FamilyRecord) error {
 			return err
 		}
 		fc.response.Ref.Husband = father
+		fc.response.Ref.Title = father.LastNames[0]
+	} else {
+		fc.response.Ref.Title = "Unknown"
 	}
 
 	if family.Wife != nil {
@@ -78,6 +85,9 @@ func (api *apiResponse) addFamily(family *gedcom.FamilyRecord) error {
 			return err
 		}
 		fc.response.Ref.Wife = mother
+		fc.response.Ref.Title += "/" + mother.LastNames[0]
+	} else {
+		fc.response.Ref.Title += "/Unknown"
 	}
 
 	for _, i := range family.Child {
@@ -134,4 +144,86 @@ func (fc *familyControl) addCitations(citations []*gedcom.CitationRecord) []int 
 
 	sort.Ints(citationList)
 	return citationList
+}
+
+func (api *apiResponse) exportFamilyAPI() error {
+	familyAPIDir := filepath.Join(api.cx.String("project"), "static", "api", "family")
+	err := os.MkdirAll(familyAPIDir, 0777)
+	if err != nil {
+		return err
+	}
+	for id, family := range api.families {
+		file := filepath.Join(familyAPIDir, strings.ToLower(id+".json"))
+		fh, err := os.Create(file)
+		if err != nil {
+			return err
+		}
+
+		j, err := json.Marshal(family)
+		if err != nil {
+			fh.Close()
+			return err
+		}
+		_, err = fh.Write(j)
+		if err != nil {
+			fh.Close()
+			return err
+		}
+		fh.Close()
+	}
+
+	return nil
+}
+
+func (api *apiResponse) exportFamilyPages() error {
+
+	const familyPageTemplate string = `---
+url: "/{{ .ID }}/"
+categories:
+  - Family
+---
+<script src="/js/jquery.min.js"></script>
+<script src="/js/idrisutil.js"></script>
+<script src="/js/familydisplay.js"></script>
+
+<link rel="stylesheet" href="/js/photoswipe.css">
+<link rel="stylesheet" href="/js/default-skin/default-skin.css">
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+$(document).ready(function(){
+    familydisplay("{{ .ID }}")
+});
+</script>
+
+<div id="display"></div>
+
+<div id="raw"></div>
+`
+
+	familyDir := filepath.Join(api.cx.String("project"), "content", "family")
+	err := os.MkdirAll(familyDir, 0777)
+	if err != nil {
+		return err
+	}
+
+	for _, family := range api.families {
+		file := filepath.Join(familyDir, family.ID+".md")
+
+		fh, err := os.Create(file)
+		if err != nil {
+			return err
+		}
+		defer fh.Close()
+
+		tpl := template.New("family")
+		tpl, err = tpl.Parse(familyPageTemplate)
+		if err != nil {
+			return err
+		}
+		err = tpl.Execute(fh, family)
+	}
+
+	return nil
 }

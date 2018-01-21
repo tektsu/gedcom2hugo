@@ -2,46 +2,15 @@ package cmd
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
-	"text/template"
 
 	"github.com/tektsu/gedcom"
 	"github.com/urfave/cli"
 )
 
-// sourceIndex is a cache of information about each source
-type sourceIndex map[int]string
-
-// Global caches
-var sources sourceIndex
-var people personIndex
 var tagTable map[string]string
-var photos photoIndex
-
-func shortcode(c string) string {
-	return fmt.Sprintf("{{< %s >}}", c)
-}
-
-func openShortcode() string {
-	return fmt.Sprintf("{{< ")
-}
-
-func closeShortcode() string {
-	return fmt.Sprintf(" >}}")
-}
-
-func min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
 
 // Generate reads the GEDCOM file and builds the Hugo input files.
 func Generate(cx *cli.Context) error {
@@ -67,242 +36,62 @@ func Generate(cx *cli.Context) error {
 		"RESI": "Residence",
 	}
 
-	photos = make(photoIndex)
-
-	project := cx.String("project")
-
 	gc, err := readGedcom(cx)
 	if err != nil {
 		return cli.NewExitError(err, 1)
 	}
 
-	people = newPersonIndex(gc)
-
-	// Generate Source Pages.
-	sources = make(sourceIndex)
-	sourceDir := filepath.Join(project, "content", "source")
-	err = os.MkdirAll(sourceDir, 0777)
-	if err != nil {
-		return cli.NewExitError(err, 1)
-	}
-
-	for _, source := range gc.Source {
-		id := source.Xref
-		file := filepath.Join(sourceDir, strings.ToLower(id+".md"))
-		fh, err := os.Create(file)
-		if err != nil {
-			return cli.NewExitError(err, 1)
-		}
-		defer fh.Close()
-
-		data := newSourceTmplData(source)
-		sources[data.RefNum] = data.Ref
-
-		tpl := template.New("source")
-		tpl, err = tpl.Parse(sourcePageTemplate)
-		if err != nil {
-			return cli.NewExitError(err, 1)
-		}
-		err = tpl.Execute(fh, data)
-	}
-
-	// Generate Person Pages.
-	personDir := filepath.Join(project, "content", "person")
-	err = os.MkdirAll(personDir, 0777)
-	if err != nil {
-		return cli.NewExitError(err, 1)
-	}
-
-	for _, person := range gc.Individual {
-		id := person.Xref
-		file := filepath.Join(personDir, strings.ToLower(id+".md"))
-
-		fh, err := os.Create(file)
-		if err != nil {
-			return cli.NewExitError(err, 1)
-		}
-		defer fh.Close()
-
-		data := newPersonTmplData(person)
-
-		tpl := template.New("person")
-		funcs := template.FuncMap{
-			"add":            func(x, y int) int { return x + y },
-			"min":            min,
-			"ToLower":        strings.ToLower,
-			"shortcode":      shortcode,
-			"openShortcode":  openShortcode,
-			"closeShortcode": closeShortcode,
-		}
-		tpl.Funcs(funcs)
-		tpl, err = tpl.Parse(personPageTemplate)
-		if err != nil {
-			return cli.NewExitError(err, 1)
-		}
-		err = tpl.Execute(fh, data)
-	}
-
-	// Generate Media Pages.
-	mediaDir := filepath.Join(project, "content", "media")
-	err = os.MkdirAll(mediaDir, 0777)
-	if err != nil {
-		return cli.NewExitError(err, 1)
-	}
-
-	for key, photo := range photos {
-
-		file := filepath.Join(mediaDir, strings.ToLower(key+".md"))
-
-		fh, err := os.Create(file)
-		if err != nil {
-			return cli.NewExitError(err, 1)
-		}
-		defer fh.Close()
-
-		tpl := template.New("photo")
-		funcs := template.FuncMap{
-			"add":            func(x, y int) int { return x + y },
-			"min":            min,
-			"ToLower":        strings.ToLower,
-			"shortcode":      shortcode,
-			"openShortcode":  openShortcode,
-			"closeShortcode": closeShortcode,
-		}
-		tpl.Funcs(funcs)
-		tpl, err = tpl.Parse(photoPageTemplate)
-		if err != nil {
-			return cli.NewExitError(err, 1)
-		}
-		err = tpl.Execute(fh, newPhotoTmplData(photo))
-	}
-
-	err = generateAPI(cx, gc)
-	if err != nil {
-		return cli.NewExitError(err, 1)
-	}
-
-	return nil
-}
-
-func generateAPI(cx *cli.Context, gc *gedcom.Gedcom) error {
-
-	project := cx.String("project")
-
 	api := newAPIResponse(cx)
 
-	err := api.buildFromGedcom(gc)
+	err = api.buildFromGedcom(gc)
 	if err != nil {
-		return err
+		return cli.NewExitError(err, 1)
 	}
 
-	// Generate source api responses.
-	sourceAPIDir := filepath.Join(project, "static", "api", "source")
-	err = os.MkdirAll(sourceAPIDir, 0777)
+	err = api.exportSourceAPI()
 	if err != nil {
-		return err
-	}
-	for id, source := range api.sources {
-		file := filepath.Join(sourceAPIDir, strings.ToLower(id+".json"))
-		fh, err := os.Create(file)
-		if err != nil {
-			return err
-		}
-
-		j, err := json.Marshal(source)
-		if err != nil {
-			fh.Close()
-			return err
-		}
-		_, err = fh.Write(j)
-		if err != nil {
-			fh.Close()
-			return err
-		}
-		fh.Close()
+		return cli.NewExitError(err, 1)
 	}
 
-	// Generate individual api responses.
-	individualAPIDir := filepath.Join(project, "static", "api", "individual")
-	err = os.MkdirAll(individualAPIDir, 0777)
+	err = api.exportSourcePages()
 	if err != nil {
-		return err
-	}
-	for id, individual := range api.individuals {
-		file := filepath.Join(individualAPIDir, strings.ToLower(id+".json"))
-		fh, err := os.Create(file)
-		if err != nil {
-			return err
-		}
-
-		j, err := json.Marshal(individual)
-		if err != nil {
-			fh.Close()
-			return err
-		}
-		_, err = fh.Write(j)
-		if err != nil {
-			fh.Close()
-			return err
-		}
-		fh.Close()
+		return cli.NewExitError(err, 1)
 	}
 
-	// Generate family api responses.
-	familyAPIDir := filepath.Join(project, "static", "api", "family")
-	err = os.MkdirAll(familyAPIDir, 0777)
+	err = api.exportIndividualAPI()
 	if err != nil {
-		return err
-	}
-	for id, family := range api.families {
-		file := filepath.Join(familyAPIDir, strings.ToLower(id+".json"))
-		fh, err := os.Create(file)
-		if err != nil {
-			return err
-		}
-
-		j, err := json.Marshal(family)
-		if err != nil {
-			fh.Close()
-			return err
-		}
-		_, err = fh.Write(j)
-		if err != nil {
-			fh.Close()
-			return err
-		}
-		fh.Close()
+		return cli.NewExitError(err, 1)
 	}
 
-	// Generate photo api responses.
-	photoAPIDir := filepath.Join(project, "static", "api", "photo")
-	err = os.MkdirAll(photoAPIDir, 0777)
+	err = api.exportIndividualPages()
 	if err != nil {
-		return err
+		return cli.NewExitError(err, 1)
 	}
-	for id, photo := range api.photos {
-		file := filepath.Join(photoAPIDir, strings.ToLower(id+".json"))
-		fh, err := os.Create(file)
-		if err != nil {
-			return err
-		}
 
-		j, err := json.Marshal(photo)
-		if err != nil {
-			fh.Close()
-			return err
-		}
-		_, err = fh.Write(j)
-		if err != nil {
-			fh.Close()
-			return err
-		}
-		fh.Close()
+	err = api.exportFamilyAPI()
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+
+	err = api.exportFamilyPages()
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+
+	err = api.exportPhotoAPI()
+	if err != nil {
+		return cli.NewExitError(err, 1)
+	}
+
+	err = api.exportPhotoPages()
+	if err != nil {
+		return cli.NewExitError(err, 1)
 	}
 
 	// Configure for JSON headers.
 	err = ioutil.WriteFile("static/api/_headers", []byte("/*  Access-Control-Allow-Origin: *  content-type: application/json; charset=utf-8"), 0644)
 	if err != nil {
-		return err
+		return cli.NewExitError(err, 1)
 	}
 
 	return nil

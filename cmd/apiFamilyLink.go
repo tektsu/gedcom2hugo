@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"strings"
+
 	"github.com/tektsu/gedcom"
 )
 
@@ -21,7 +23,7 @@ func (ic *individualControl) newFamilyLinkResponse(flr *gedcom.FamilyLinkRecord)
 	}
 
 	response := &familyLinkResponse{
-		ID:        flr.Family.Xref,
+		ID:        strings.ToLower(flr.Family.Xref),
 		Pedigree:  flr.Pedigree,
 		AdoptedBy: flr.AdoptedBy,
 	}

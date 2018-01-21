@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"image"
+	_ "image/jpeg" // Register decoders
+	_ "image/png"
 	"os"
 	"path/filepath"
 	"strings"
@@ -90,7 +92,7 @@ func (api *apiResponse) addPhoto(o *gedcom.ObjectRecord) *photoResponse {
 
 		image, _, err := image.DecodeConfig(file) // Image Struct
 		if err != nil {
-			fmt.Printf("%s: %v\n", o.File.Name, err)
+			fmt.Printf("hsgdhajsgdjhas %s: %v\n", o.File.Name, err)
 			return api.photos[key]
 		}
 
@@ -149,4 +151,11 @@ func (api *apiResponse) buildFromGedcom(g *gedcom.Gedcom) error {
 	}
 
 	return nil
+}
+
+func getPhotoKeyFromObject(o *gedcom.ObjectRecord) string {
+
+	key := "p" + strings.ToLower(strings.Replace(filepath.Base(o.File.Name), ".", "", -1))
+
+	return key
 }

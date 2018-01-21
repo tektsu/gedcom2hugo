@@ -1,8 +1,12 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"html/template"
+	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -21,7 +25,6 @@ type individualResponse struct {
 	TopPhoto      *photoResponse               `json:"topphoto"`
 	Photos        []*photoResponse             `json:"photos"`
 	Citations     citationResponses            `json:"citations"`
-	//LastNames     []string
 }
 
 type individualResponses map[string]*individualResponse
@@ -109,6 +112,7 @@ func (ic *individualControl) build(individual *gedcom.IndividualRecord) error {
 	}
 	given, family := extractNames(individual.Name[0].Name)
 	ic.response.Ref.Name = fmt.Sprintf("%s %s", given, family)
+	ic.response.Ref.LastNames = append(ic.response.Ref.LastNames, family)
 
 	if individual.Photo != nil {
 		ic.response.Ref.Photo = filepath.Base(individual.Photo.File.Name)
@@ -156,4 +160,103 @@ func (ic *individualControl) build(individual *gedcom.IndividualRecord) error {
 	ic.api.individuals[ic.response.ID] = ic.response
 
 	return nil
+}
+
+func (api *apiResponse) exportIndividualAPI() error {
+	individualAPIDir := filepath.Join(api.cx.String("project"), "static", "api", "individual")
+	err := os.MkdirAll(individualAPIDir, 0777)
+	if err != nil {
+		return err
+	}
+	for id, individual := range api.individuals {
+		file := filepath.Join(individualAPIDir, strings.ToLower(id+".json"))
+		fh, err := os.Create(file)
+		if err != nil {
+			return err
+		}
+
+		j, err := json.Marshal(individual)
+		if err != nil {
+			fh.Close()
+			return err
+		}
+		_, err = fh.Write(j)
+		if err != nil {
+			fh.Close()
+			return err
+		}
+		fh.Close()
+	}
+
+	return nil
+}
+
+func (api *apiResponse) exportIndividualPages() error {
+
+	const personPageTemplate string = `---
+title: "{{ .Ref.Name }}{{ if or .Ref.Birth .Ref.Death }} ({{ .Ref.Birth }} - {{ .Ref.Death }}){{ end }}"
+url: "/{{ .ID }}/"
+categories:
+  - Person
+{{ if .Ref.LastNames }}lastnames:
+  {{ range .Ref.LastNames }}- {{ . }}{{ end }}
+{{- end }}
+{{ if .Ref.Photo }}portrait: {{ .Ref.Photo }}{{end}}
+---
+<script src="/js/jquery.min.js"></script>
+<script src="/js/idrisutil.js"></script>
+<script src="/js/individualdisplay.js"></script>
+
+<link rel="stylesheet" href="/js/photoswipe.css">
+<link rel="stylesheet" href="/js/default-skin/default-skin.css">
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+$(document).ready(function(){
+    individualdisplay("{{ .ID }}")
+});
+</script>
+
+<div id="display"></div>
+
+<div id="raw"></div>
+`
+
+	personDir := filepath.Join(api.cx.String("project"), "content", "person")
+	err := os.MkdirAll(personDir, 0777)
+	if err != nil {
+		return err
+	}
+
+	for _, individual := range api.individuals {
+		file := filepath.Join(personDir, individual.ID+".md")
+
+		fh, err := os.Create(file)
+		if err != nil {
+			return err
+		}
+		defer fh.Close()
+
+		tpl := template.New("person")
+		tpl, err = tpl.Parse(personPageTemplate)
+		if err != nil {
+			return err
+		}
+		err = tpl.Execute(fh, individual)
+	}
+
+	return nil
+}
+
+// extractNames splits a full name into a given name and a family name.
+func extractNames(name string) (string, string) {
+	var given, family string
+
+	re := regexp.MustCompile("^([^/]+) +/(.+)/(.*)$")
+	names := re.FindStringSubmatch(name)
+	given = names[1]
+	family = names[2]
+
+	return given, family
 }

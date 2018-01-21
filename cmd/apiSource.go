@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"html/template"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -25,14 +28,15 @@ func newCitationResponse() *sourceCitationResponse {
 type sourceCitationResponses map[string]*sourceCitationResponse
 
 type sourceResponse struct {
-	ID        string                  `json:"id"`
-	Author    string                  `json:"author"`
-	Title     string                  `json:"title"`
-	File      []string                `json:"file"`
-	RefNum    int                     `json:"refnum"`
-	Ref       string                  `json:"ref"`
-	Note      string                  `json:"note"`
-	Citations sourceCitationResponses `json:"citations"`
+	ID          string                  `json:"id"`
+	Author      string                  `json:"author"`
+	Title       string                  `json:"title"`
+	Publication string                  `json:"publication"`
+	File        []string                `json:"file"`
+	RefNum      int                     `json:"refnum"`
+	Ref         string                  `json:"ref"`
+	Note        string                  `json:"note"`
+	Citations   sourceCitationResponses `json:"citations"`
 }
 
 type sourceResponses map[string]*sourceResponse
@@ -57,11 +61,12 @@ func (api *apiResponse) addSources() error {
 func (api *apiResponse) addSource(source *gedcom.SourceRecord) error {
 
 	response := &sourceResponse{
-		ID:        strings.ToLower(source.Xref),
-		Author:    source.Author,
-		Title:     source.Title,
-		Ref:       source.GetReferenceString(),
-		Citations: make(sourceCitationResponses),
+		ID:          strings.ToLower(source.Xref),
+		Author:      source.Author,
+		Title:       source.Title,
+		Publication: source.Publication,
+		Ref:         source.GetReferenceString(),
+		Citations:   make(sourceCitationResponses),
 	}
 
 	if _, ok := api.sources[response.ID]; ok {
@@ -99,6 +104,82 @@ func (api *apiResponse) addSource(source *gedcom.SourceRecord) error {
 	}
 
 	api.sources[response.ID] = response
+
+	return nil
+}
+
+func (api *apiResponse) exportSourceAPI() error {
+	sourceAPIDir := filepath.Join(api.cx.String("project"), "static", "api", "source")
+	err := os.MkdirAll(sourceAPIDir, 0777)
+	if err != nil {
+		return err
+	}
+	for id, source := range api.sources {
+		file := filepath.Join(sourceAPIDir, strings.ToLower(id+".json"))
+		fh, err := os.Create(file)
+		if err != nil {
+			return err
+		}
+
+		j, err := json.Marshal(source)
+		if err != nil {
+			fh.Close()
+			return err
+		}
+		_, err = fh.Write(j)
+		if err != nil {
+			fh.Close()
+			return err
+		}
+		fh.Close()
+	}
+
+	return nil
+}
+
+func (api *apiResponse) exportSourcePages() error {
+
+	// sourcePageTemplate is the tmplate used to generaate a source web page.
+	const sourcePageTemplate string = `---
+url: "/{{ .ID }}/"
+categories:
+  - Source
+title: "Source: {{ if .Title }}{{ .Title }}{{ end }}"
+{{ if .RefNum }}refnum: "{{ .RefNum }}"{{ end }}
+---
+<script src="/js/jquery.min.js"></script>
+<script src="/js/sourcedisplay.js"></script>
+<script>
+$(document).ready(function(){
+    sourcedisplay("{{ .ID }}")
+});
+</script>
+
+<div id="display"></div>
+
+<div id="raw"></div>
+`
+
+	sourceDir := filepath.Join(api.cx.String("project"), "content", "source")
+	err := os.MkdirAll(sourceDir, 0777)
+	if err != nil {
+		return err
+	}
+	for _, source := range api.sources {
+		file := filepath.Join(sourceDir, strings.ToLower(source.ID+".md"))
+		fh, err := os.Create(file)
+		if err != nil {
+			return err
+		}
+		defer fh.Close()
+
+		tpl := template.New("source")
+		tpl, err = tpl.Parse(sourcePageTemplate)
+		if err != nil {
+			return err
+		}
+		err = tpl.Execute(fh, source)
+	}
 
 	return nil
 }
