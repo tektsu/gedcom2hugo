@@ -1,15 +1,18 @@
 package cmd
 
-import "github.com/tektsu/gedcom"
+import (
+	"github.com/tektsu/gedcom"
+)
 
 type eventResponse struct {
-	Name      string `json:"name"`
-	Tag       string `json:"tag"`
-	Value     string `json:"value"`
-	Type      string `json:"type"`
-	Date      string `json:"date"`
-	Place     string `json:"place"`
-	Citations []int  `json:"citations"`
+	Name      string   `json:"name"`
+	Tag       string   `json:"tag"`
+	Value     string   `json:"value"`
+	Type      string   `json:"type"`
+	Date      string   `json:"date"`
+	Place     string   `json:"place"`
+	Notes     []string `json:"notes"`
+	Citations []int    `json:"citations"`
 }
 
 func (ic *individualControl) newEventResponse(event *gedcom.EventRecord) (*eventResponse, error) {
@@ -29,6 +32,10 @@ func (ic *individualControl) newEventResponse(event *gedcom.EventRecord) (*event
 	name, exists := tagTable[response.Name]
 	if exists {
 		response.Name = name
+	}
+
+	for _, note := range event.Note {
+		response.Notes = append(response.Notes, note.Note)
 	}
 
 	response.Citations = append(response.Citations, ic.addCitations(event.Place.Citation)...) // Append place citations to the event
@@ -92,6 +99,10 @@ func (fc *familyControl) newEventResponse(event *gedcom.EventRecord) (*eventResp
 	name, exists := tagTable[response.Name]
 	if exists {
 		response.Name = name
+	}
+
+	for _, note := range event.Note {
+		response.Notes = append(response.Notes, note.Note)
 	}
 
 	response.Citations = append(response.Citations, fc.addCitations(event.Place.Citation)...) // Append place citations to the event

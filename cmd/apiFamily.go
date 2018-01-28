@@ -14,7 +14,7 @@ import (
 
 type familyResponse struct {
 	ID        string                       `json:"id"`
-	Note      string                       `json:"note"`
+	Notes     []string                     `json:"note"`
 	Ref       *familyReferenceResponse     `json:"ref"`
 	Children  individualReferenceResponses `json:"children"`
 	Photos    []*photoResponse             `json:"photos"`
@@ -103,10 +103,10 @@ func (api *apiResponse) addFamily(family *gedcom.FamilyRecord) error {
 		return err
 	}
 
-	// Get note.
+	// Get notes.
 	if len(family.Note) > 0 {
 		for _, n := range family.Note {
-			fc.response.Note += n.Note + "\n\n"
+			fc.response.Notes = append(fc.response.Notes, n.Note)
 		}
 	}
 
