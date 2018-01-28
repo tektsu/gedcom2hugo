@@ -13,6 +13,7 @@ import (
 var tagTable map[string]string
 
 // Generate reads the GEDCOM file and builds the Hugo input files.
+//noinspection GoUnusedExportedFunction
 func Generate(cx *cli.Context) error {
 
 	tagTable = map[string]string{
@@ -102,7 +103,7 @@ func readGedcom(cx *cli.Context) (*gedcom.Gedcom, error) {
 	var gc *gedcom.Gedcom
 
 	if cx.String("gedcom") == "" {
-		return gc, errors.New("No GEDCOM file specified for input")
+		return gc, errors.New("no GEDCOM file specified for input")
 	}
 
 	data, err := ioutil.ReadFile(cx.String("gedcom"))

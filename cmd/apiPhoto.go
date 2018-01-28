@@ -9,14 +9,15 @@ import (
 )
 
 type photoResponse struct {
-	ID       string                       `json:"id"`
-	File     string                       `json:"file"`
-	Title    string                       `json:"title"`
-	Height   int                          `json:"height"`
-	Width    int                          `json:"width"`
-	People   individualReferenceResponses `json:"people"`
-	Families familyReferenceResponses     `json:"families"`
-	Notes    []string                     `json:"notes"`
+	ID          string                       `json:"id"`
+	File        string                       `json:"file"`
+	Title       string                       `json:"title"`
+	Description string                       `json:"description"`
+	Height      int                          `json:"height"`
+	Width       int                          `json:"width"`
+	People      individualReferenceResponses `json:"people"`
+	Families    familyReferenceResponses     `json:"families"`
+	Notes       []string                     `json:"notes"`
 }
 
 type photoResponses map[string]*photoResponse
@@ -85,7 +86,7 @@ func (api *apiResponse) exportPhotoAPI() error {
 
 func (api *apiResponse) exportPhotoPages() error {
 
-	const photoPageTemplate string = `---
+	const photoPageTemplate = `---
 url: "/{{ .ID }}/"
 categories:
   - Photo

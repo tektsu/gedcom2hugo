@@ -24,10 +24,6 @@ type apiResponse struct {
 	photos      photoResponses
 }
 
-type citationCallback func(string, []*gedcom.CitationRecord)
-type citationSubCallback func([]*gedcom.CitationRecord) []int
-type photoCallback func(*gedcom.ObjectRecord, *individualResponse) *photoResponse
-
 func newAPIResponse(c *cli.Context) *apiResponse {
 	response := &apiResponse{
 		cx:          c,
@@ -82,6 +78,13 @@ func (api *apiResponse) addPhoto(o *gedcom.ObjectRecord) *photoResponse {
 			File:  filepath.Base(o.File.Name),
 			Title: o.File.Title,
 		}
+		if o.File.Description != nil {
+			api.photos[key].Description = o.File.Description.Note
+		}
+
+		for _, note := range o.Note {
+			api.photos[key].Notes = append(api.photos[key].Notes, note.Note)
+		}
 
 		file, err := os.Open(o.File.Name)
 		defer file.Close()
@@ -90,14 +93,14 @@ func (api *apiResponse) addPhoto(o *gedcom.ObjectRecord) *photoResponse {
 			return api.photos[key]
 		}
 
-		image, _, err := image.DecodeConfig(file) // Image Struct
+		img, _, err := image.DecodeConfig(file) // Image Struct
 		if err != nil {
 			fmt.Printf("hsgdhajsgdjhas %s: %v\n", o.File.Name, err)
 			return api.photos[key]
 		}
 
-		api.photos[key].Width = image.Width
-		api.photos[key].Height = image.Height
+		api.photos[key].Width = img.Width
+		api.photos[key].Height = img.Height
 	}
 
 	return api.photos[key]

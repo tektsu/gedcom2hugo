@@ -41,11 +41,6 @@ type sourceResponse struct {
 
 type sourceResponses map[string]*sourceResponse
 
-func newSourceResponses() (sourceResponses, error) {
-	responses := make(sourceResponses)
-	return responses, nil
-}
-
 func (api *apiResponse) addSources() error {
 
 	for _, source := range api.gc.Source {
@@ -70,14 +65,14 @@ func (api *apiResponse) addSource(source *gedcom.SourceRecord) error {
 	}
 
 	if _, ok := api.sources[response.ID]; ok {
-		return fmt.Errorf("In creating source record [%+v], id is already used: [%+v]", source, api.sources[response.ID])
+		return fmt.Errorf("in creating source record [%+v], id is already used: [%+v]", source, api.sources[response.ID])
 	}
 
 	re := regexp.MustCompile("[0-9]+")
 	matches := re.FindAllString(source.Xref, 1)
 	v, err := strconv.Atoi(matches[0])
 	if err != nil {
-		return fmt.Errorf("Error converting [%s] to integer", matches[0])
+		return fmt.Errorf("error converting [%s] to integer", matches[0])
 	}
 	response.RefNum = v
 
@@ -140,7 +135,7 @@ func (api *apiResponse) exportSourceAPI() error {
 func (api *apiResponse) exportSourcePages() error {
 
 	// sourcePageTemplate is the tmplate used to generaate a source web page.
-	const sourcePageTemplate string = `---
+	const sourcePageTemplate = `---
 url: "/{{ .ID }}/"
 categories:
   - Source

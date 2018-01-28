@@ -177,7 +177,7 @@ func (api *apiResponse) exportFamilyAPI() error {
 
 func (api *apiResponse) exportFamilyPages() error {
 
-	const familyPageTemplate string = `---
+	const familyPageTemplate = `---
 url: "/{{ .ID }}/"
 categories:
   - Family

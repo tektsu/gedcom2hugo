@@ -119,7 +119,7 @@ func (ic *individualControl) build(individual *gedcom.IndividualRecord) error {
 	}
 
 	if _, ok := ic.api.individuals[ic.response.ID]; ok {
-		return fmt.Errorf("In creating individual record [%+v], id is already used: [%+v]", individual, ic.api.individuals[ic.response.ID])
+		return fmt.Errorf("in creating individual record [%+v], id is already used: [%+v]", individual, ic.api.individuals[ic.response.ID])
 	}
 
 	err = ic.addNames()
@@ -193,7 +193,7 @@ func (api *apiResponse) exportIndividualAPI() error {
 
 func (api *apiResponse) exportIndividualPages() error {
 
-	const personPageTemplate string = `---
+	const personPageTemplate = `---
 title: "{{ .Ref.Name }}{{ if or .Ref.Birth .Ref.Death }} ({{ .Ref.Birth }} - {{ .Ref.Death }}){{ end }}"
 url: "/{{ .ID }}/"
 categories:
