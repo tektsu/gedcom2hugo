@@ -1,48 +1,17 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
 	"html/template"
+	"strings"
+
+	"encoding/json"
 	"os"
 	"path/filepath"
-	"sort"
-	"strings"
 
 	"github.com/tektsu/gedcom"
 )
 
-type familyResponse struct {
-	ID        string                       `json:"id"`
-	Notes     []string                     `json:"note"`
-	Ref       *familyReferenceResponse     `json:"ref"`
-	Children  individualReferenceResponses `json:"children"`
-	Photos    []*photoResponse             `json:"photos"`
-	Events    []*eventResponse             `json:"events"`
-	Citations citationResponses            `json:"citations"`
-}
-
-type familyResponses map[string]*familyResponse
-
-type familyControl struct {
-	api           *apiResponse
-	citationCount int
-	citationIndex map[string]int
-	family        *gedcom.FamilyRecord
-	response      *familyResponse
-}
-
-func newFamilyControl(api *apiResponse) *familyControl {
-	ic := &familyControl{
-		api:           api,
-		citationCount: 0,
-		citationIndex: make(map[string]int),
-	}
-
-	return ic
-}
-
-func (api *apiResponse) addFamilies() error {
+func (api *apiControl) addFamilies() error {
 
 	for _, family := range api.gc.Family {
 		err := api.addFamily(family)
@@ -54,7 +23,7 @@ func (api *apiResponse) addFamilies() error {
 	return nil
 }
 
-func (api *apiResponse) addFamily(family *gedcom.FamilyRecord) error {
+func (api *apiControl) addFamily(family *gedcom.FamilyRecord) error {
 
 	fc := newFamilyControl(api)
 	fc.family = family
@@ -120,33 +89,19 @@ func (api *apiResponse) addFamily(family *gedcom.FamilyRecord) error {
 	return nil
 }
 
-func (fc *familyControl) addCitations(citations []*gedcom.CitationRecord) []int {
-	fc.api.addFamilyCitations(fc.response.ID, citations)
-
-	var citationList []int
-	for _, citation := range citations {
-		indexKey := fmt.Sprintf("%s:%s", citation.Source.Xref, citation.Page)
-		var citationNumber int
-		var exists bool
-		if citationNumber, exists = fc.citationIndex[indexKey]; !exists {
-			fc.citationCount++
-			citationNumber = fc.citationCount
-			fc.citationIndex[indexKey] = citationNumber
-			fc.response.Citations[citationNumber] = &citationResponse{
-				ID:        citationNumber,
-				SourceID:  strings.ToLower(citation.Source.Xref),
-				SourceRef: citation.Source.GetReferenceString(),
-				Detail:    citation.Page,
-			}
-		}
-		citationList = append(citationList, citationNumber)
+func (api *apiControl) getFamilyIndexEntry(id string) (*familyReferenceResponse, error) {
+	id = strings.ToLower(id)
+	var entry *familyReferenceResponse
+	var ok bool
+	if entry, ok = api.famIndex[id]; !ok {
+		entry = &familyReferenceResponse{ID: id}
+		api.famIndex[id] = entry
 	}
 
-	sort.Ints(citationList)
-	return citationList
+	return entry, nil
 }
 
-func (api *apiResponse) exportFamilyAPI() error {
+func (api *apiControl) exportFamilyAPI() error {
 	familyAPIDir := filepath.Join(api.cx.String("project"), "static", "api", "family")
 	err := os.MkdirAll(familyAPIDir, 0777)
 	if err != nil {
@@ -175,7 +130,7 @@ func (api *apiResponse) exportFamilyAPI() error {
 	return nil
 }
 
-func (api *apiResponse) exportFamilyPages() error {
+func (api *apiControl) exportFamilyPages() error {
 
 	const familyPageTemplate = `---
 url: "/{{ .ID }}/"

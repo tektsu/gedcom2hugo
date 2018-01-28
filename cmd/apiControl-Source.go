@@ -13,35 +13,7 @@ import (
 	"github.com/tektsu/gedcom"
 )
 
-type sourceCitationResponse struct {
-	Individuals map[string]*individualReferenceResponse `json:"individuals"`
-	Families    map[string]*familyReferenceResponse     `json:"families"`
-}
-
-func newCitationResponse() *sourceCitationResponse {
-	return &sourceCitationResponse{
-		Individuals: make(map[string]*individualReferenceResponse),
-		Families:    make(map[string]*familyReferenceResponse),
-	}
-}
-
-type sourceCitationResponses map[string]*sourceCitationResponse
-
-type sourceResponse struct {
-	ID          string                  `json:"id"`
-	Author      string                  `json:"author"`
-	Title       string                  `json:"title"`
-	Publication string                  `json:"publication"`
-	File        []string                `json:"file"`
-	RefNum      int                     `json:"refnum"`
-	Ref         string                  `json:"ref"`
-	Note        string                  `json:"note"`
-	Citations   sourceCitationResponses `json:"citations"`
-}
-
-type sourceResponses map[string]*sourceResponse
-
-func (api *apiResponse) addSources() error {
+func (api *apiControl) addSources() error {
 
 	for _, source := range api.gc.Source {
 		err := api.addSource(source)
@@ -53,7 +25,7 @@ func (api *apiResponse) addSources() error {
 	return nil
 }
 
-func (api *apiResponse) addSource(source *gedcom.SourceRecord) error {
+func (api *apiControl) addSource(source *gedcom.SourceRecord) error {
 
 	response := &sourceResponse{
 		ID:          strings.ToLower(source.Xref),
@@ -103,7 +75,7 @@ func (api *apiResponse) addSource(source *gedcom.SourceRecord) error {
 	return nil
 }
 
-func (api *apiResponse) exportSourceAPI() error {
+func (api *apiControl) exportSourceAPI() error {
 	sourceAPIDir := filepath.Join(api.cx.String("project"), "static", "api", "source")
 	err := os.MkdirAll(sourceAPIDir, 0777)
 	if err != nil {
@@ -132,7 +104,7 @@ func (api *apiResponse) exportSourceAPI() error {
 	return nil
 }
 
-func (api *apiResponse) exportSourcePages() error {
+func (api *apiControl) exportSourcePages() error {
 
 	// sourcePageTemplate is the tmplate used to generaate a source web page.
 	const sourcePageTemplate = `---

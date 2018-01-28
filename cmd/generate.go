@@ -42,7 +42,7 @@ func Generate(cx *cli.Context) error {
 		return cli.NewExitError(err, 1)
 	}
 
-	api := newAPIResponse(cx)
+	api := newAPIControl(cx)
 
 	err = api.buildFromGedcom(gc)
 	if err != nil {
