@@ -7,15 +7,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bbb8dc10-de55-451d-9fc4-113943c57048" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/.idea/watcherTasks.xml" />
-      <change beforePath="$PROJECT_DIR$/cmd/apiFamily.go" afterPath="$PROJECT_DIR$/cmd/apiFamily.go" />
       <change beforePath="$PROJECT_DIR$/cmd/apiIndividual.go" afterPath="$PROJECT_DIR$/cmd/apiIndividual.go" />
-      <change beforePath="$PROJECT_DIR$/cmd/apiPhoto.go" afterPath="$PROJECT_DIR$/cmd/apiPhoto.go" />
-      <change beforePath="$PROJECT_DIR$/cmd/apiResponse.go" afterPath="$PROJECT_DIR$/cmd/apiResponse.go" />
-      <change beforePath="$PROJECT_DIR$/cmd/apiSource.go" afterPath="$PROJECT_DIR$/cmd/apiSource.go" />
-      <change beforePath="$PROJECT_DIR$/cmd/generate.go" afterPath="$PROJECT_DIR$/cmd/generate.go" />
-      <change beforePath="$PROJECT_DIR$/main.go" afterPath="$PROJECT_DIR$/main.go" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -76,11 +68,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="apiIndividual.go" pinned="false" current-in-tab="false">
+      <file leaf-file-name="apiIndividual.go" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/cmd/apiIndividual.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="446">
-              <caret line="242" column="15" lean-forward="false" selection-start-line="242" selection-start-column="15" selection-end-line="242" selection-end-column="15" />
+            <state relative-caret-position="461">
+              <caret line="161" column="62" lean-forward="false" selection-start-line="161" selection-start-column="62" selection-end-line="161" selection-end-column="62" />
               <folding />
             </state>
           </provider>
@@ -106,7 +98,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="apiResponse.go" pinned="false" current-in-tab="true">
+      <file leaf-file-name="apiResponse.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/cmd/apiResponse.go">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="315">
@@ -126,10 +118,10 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/cmd/generate.go" />
-        <option value="$PROJECT_DIR$/cmd/apiIndividual.go" />
         <option value="$PROJECT_DIR$/cmd/apiSource.go" />
         <option value="$PROJECT_DIR$/cmd/apiPhoto.go" />
         <option value="$PROJECT_DIR$/cmd/apiResponse.go" />
+        <option value="$PROJECT_DIR$/cmd/apiIndividual.go" />
       </list>
     </option>
   </component>
@@ -140,8 +132,8 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="42" />
-    <option name="y" value="24" />
+    <option name="x" value="46" />
+    <option name="y" value="23" />
     <option name="width" value="2518" />
     <option name="height" value="1416" />
   </component>
@@ -238,7 +230,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="42" y="24" width="2518" height="1416" extended-state="6" />
+    <frame x="46" y="23" width="2518" height="1416" extended-state="6" />
     <layout>
       <window_info id="PlantUML" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -361,14 +353,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmd/apiIndividual.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="446">
-          <caret line="242" column="15" lean-forward="false" selection-start-line="242" selection-start-column="15" selection-end-line="242" selection-end-column="15" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/cmd/generate.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1440">
@@ -405,6 +389,14 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="315">
           <caret line="81" column="64" lean-forward="false" selection-start-line="81" selection-start-column="64" selection-end-line="81" selection-end-column="64" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmd/apiIndividual.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="461">
+          <caret line="161" column="62" lean-forward="false" selection-start-line="161" selection-start-column="62" selection-end-line="161" selection-end-column="62" />
           <folding />
         </state>
       </provider>

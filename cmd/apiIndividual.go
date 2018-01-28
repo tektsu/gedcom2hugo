@@ -25,6 +25,7 @@ type individualResponse struct {
 	TopPhoto      *photoResponse               `json:"topphoto"`
 	Photos        []*photoResponse             `json:"photos"`
 	Citations     citationResponses            `json:"citations"`
+	Notes         []string                     `json:"notes"`
 }
 
 type individualResponses map[string]*individualResponse
@@ -155,6 +156,10 @@ func (ic *individualControl) build(individual *gedcom.IndividualRecord) error {
 	err = ic.addTopPhoto()
 	if err != nil {
 		return err
+	}
+
+	for _, note := range individual.Note {
+		ic.response.Notes = append(ic.response.Notes, note.Note)
 	}
 
 	ic.api.individuals[ic.response.ID] = ic.response
