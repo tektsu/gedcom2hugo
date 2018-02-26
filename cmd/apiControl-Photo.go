@@ -105,7 +105,10 @@ func (api *apiControl) exportPhotoAPI() error {
 	if err != nil {
 		return err
 	}
+
+	var photoIDs []string
 	for id, photo := range api.photos {
+		photoIDs = append(photoIDs, id)
 		file := filepath.Join(photoAPIDir, strings.ToLower(id+".json"))
 		fh, err := os.Create(file)
 		if err != nil {
@@ -124,6 +127,23 @@ func (api *apiControl) exportPhotoAPI() error {
 		}
 		fh.Close()
 	}
+	file := filepath.Join(photoAPIDir, strings.ToLower("list.json"))
+	fh, err := os.Create(file)
+	if err != nil {
+		return err
+	}
+
+	j, err := json.Marshal(photoIDs)
+	if err != nil {
+		fh.Close()
+		return err
+	}
+	_, err = fh.Write(j)
+	if err != nil {
+		fh.Close()
+		return err
+	}
+	fh.Close()
 
 	return nil
 }
