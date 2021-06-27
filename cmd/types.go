@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/tektsu/gedcom"
+	"github.com/iand/gedcom"
 	"github.com/urfave/cli"
 )
 
@@ -49,7 +49,6 @@ type familyIndex map[string]*familyReferenceResponse
 type familyLinkResponse struct {
 	ID        string                       `json:"id"`
 	Pedigree  string                       `json:"pedigree"`
-	AdoptedBy string                       `json:"adoptedby"`
 	Events    []*eventResponse             `json:"events"`
 	Mother    *individualReferenceResponse `json:"mother"`
 	Father    *individualReferenceResponse `json:"father"`

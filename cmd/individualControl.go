@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tektsu/gedcom"
+	"github.com/iand/gedcom"
 )
 
 func newIndividualControl(api *apiControl) *individualControl {
@@ -34,7 +34,7 @@ func (ic *individualControl) addCitations(citations []*gedcom.CitationRecord) []
 			ic.response.Citations[citationNumber] = &citationResponse{
 				ID:        citationNumber,
 				SourceID:  strings.ToLower(citation.Source.Xref),
-				SourceRef: citation.Source.GetReferenceString(),
+				SourceRef: GetReferenceString(citation.Source),
 				Detail:    citation.Page,
 			}
 		}
@@ -65,8 +65,11 @@ func (ic *individualControl) build(individual *gedcom.IndividualRecord) error {
 	ic.response.Ref.Name = fmt.Sprintf("%s %s", given, family)
 	ic.response.Ref.LastNames = append(ic.response.Ref.LastNames, family)
 
-	if individual.Photo != nil {
-		ic.response.Ref.Photo = filepath.Base(individual.Photo.File.Name)
+	for i := range individual.UserDefined {
+		if individual.UserDefined[i].Tag == "_PHOTO" {
+			ic.response.Ref.Photo = filepath.Base(individual.UserDefined[i].Value)
+			break
+		}
 	}
 
 	if _, ok := ic.api.individuals[ic.response.ID]; ok {
@@ -118,7 +121,6 @@ func (ic *individualControl) build(individual *gedcom.IndividualRecord) error {
 }
 
 func (ic *individualControl) newIndividualNameResponse(name *gedcom.NameRecord) (*individualNameResponse, error) {
-
 	given, family := extractNames(name.Name)
 	response := &individualNameResponse{
 		First:     given,
@@ -133,7 +135,6 @@ func (ic *individualControl) newIndividualNameResponse(name *gedcom.NameRecord) 
 
 func (ic *individualControl) addNames() error {
 	for i, n := range ic.individual.Name {
-
 		nameResponse, err := ic.newIndividualNameResponse(n)
 		if err != nil {
 			return err
@@ -152,15 +153,13 @@ func (ic *individualControl) addNames() error {
 }
 
 func (ic *individualControl) newFamilyLinkResponse(flr *gedcom.FamilyLinkRecord) (*familyLinkResponse, error) {
-
 	if flr.Family == nil {
 		return nil, nil
 	}
 
 	response := &familyLinkResponse{
 		ID:        strings.ToLower(flr.Family.Xref),
-		Pedigree:  flr.Pedigree,
-		AdoptedBy: flr.AdoptedBy,
+		Pedigree:  flr.Type,
 	}
 
 	if flr.Family.Husband != nil {
@@ -180,7 +179,7 @@ func (ic *individualControl) newFamilyLinkResponse(flr *gedcom.FamilyLinkRecord)
 	}
 
 	for _, i := range flr.Family.Child {
-		child, err := ic.api.getIndividualIndexEntry(i.Person.Xref)
+		child, err := ic.api.getIndividualIndexEntry(i.Xref)
 		if err != nil {
 			return response, err
 		}
@@ -227,20 +226,22 @@ func (ic *individualControl) addFamilies() error {
 }
 
 func (ic *individualControl) addPhotos() error {
-	for _, o := range ic.individual.Object {
-		if o.File.Form != "jpg" && o.File.Form != "png" {
-			continue
+	for _, o := range ic.individual.Media {
+		for _, photo := range o.File {
+			if photo.Format != "jpg" && photo.Format != "png" {
+				continue
+			}
+			p := ic.api.addPhotoForIndividual(o, ic.response)
+			ic.response.Photos = append(ic.response.Photos, p)
 		}
-		p := ic.api.addPhotoForIndividual(o, ic.response)
-		ic.response.Photos = append(ic.response.Photos, p)
 	}
 
 	return nil
 }
 
 func (ic *individualControl) addTopPhoto() error {
-	if ic.individual.Photo != nil {
-		p := ic.api.addPhoto(ic.individual.Photo) // Don't use addPhotoForIndividual() here of there will be a duplicate on the photo page
+	if ic.individual.Media != nil {
+		p := ic.api.addPhoto(ic.individual.Media[0]) // Don't use addPhotoForIndividual() here, or there will be a duplicate on the photo page
 		ic.response.TopPhoto = p
 	}
 
@@ -248,7 +249,6 @@ func (ic *individualControl) addTopPhoto() error {
 }
 
 func (ic *individualControl) newEventResponse(event *gedcom.EventRecord) (*eventResponse, error) {
-
 	response := &eventResponse{
 		Name:      event.Tag,
 		Tag:       event.Tag,

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tektsu/gedcom"
+	"github.com/iand/gedcom"
 )
 
 func newFamilyControl(api *apiControl) *familyControl {
@@ -19,19 +19,21 @@ func newFamilyControl(api *apiControl) *familyControl {
 }
 
 func (fc *familyControl) addPhotos() error {
-	for _, o := range fc.family.Object {
-		if o.File.Form != "jpg" && o.File.Form != "png" {
-			continue
+	for _, o := range fc.family.Media {
+		for _, i := range o.File {
+			if i.Format != "jpg" && i.Format != "png" {
+				continue
+			}
+			p := fc.api.addPhotoForFamily(o, fc.response)
+			fc.response.Photos = append(fc.response.Photos, p)
 		}
-		p := fc.api.addPhotoForFamily(o, fc.response)
-		fc.response.Photos = append(fc.response.Photos, p)
 	}
 
 	return nil
 }
 
 func (fc *familyControl) addCitations(citations []*gedcom.CitationRecord) []int {
-	fc.api.addFamilyCitations(fc.response.ID, citations)
+	_ = fc.api.addFamilyCitations(fc.response.ID, citations)
 
 	var citationList []int
 	for _, citation := range citations {
@@ -45,7 +47,7 @@ func (fc *familyControl) addCitations(citations []*gedcom.CitationRecord) []int 
 			fc.response.Citations[citationNumber] = &citationResponse{
 				ID:        citationNumber,
 				SourceID:  strings.ToLower(citation.Source.Xref),
-				SourceRef: citation.Source.GetReferenceString(),
+				SourceRef: GetReferenceString(citation.Source),
 				Detail:    citation.Page,
 			}
 		}
@@ -57,7 +59,6 @@ func (fc *familyControl) addCitations(citations []*gedcom.CitationRecord) []int 
 }
 
 func (fc *familyControl) newEventResponse(event *gedcom.EventRecord) (*eventResponse, error) {
-
 	response := &eventResponse{
 		Name:      event.Tag,
 		Tag:       event.Tag,
@@ -86,7 +87,6 @@ func (fc *familyControl) newEventResponse(event *gedcom.EventRecord) (*eventResp
 
 func (fc *familyControl) addEvents() error {
 	for _, r := range fc.family.Event {
-
 		eventResponse, err := fc.newEventResponse(r)
 		if err != nil {
 			return err

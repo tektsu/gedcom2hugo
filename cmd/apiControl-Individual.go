@@ -3,12 +3,13 @@ package cmd
 import (
 	"encoding/json"
 	"html/template"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
-	"github.com/tektsu/gedcom"
+	"github.com/iand/gedcom"
 )
 
 func (api *apiControl) addIndividuals() error {
@@ -44,10 +45,16 @@ func (api *apiControl) addIndividual(individual *gedcom.IndividualRecord) error 
 	return nil
 }
 
-func (api *apiControl) addIndividualCitations(individualID string, citations []*gedcom.CitationRecord) error {
+func (api *apiControl) addIndividualCitations(individualID string, citations []*gedcom.CitationRecord) {
 	for _, citation := range citations {
 		sourceID := strings.ToLower(citation.Source.Xref)
 		var c *sourceCitationResponse
+
+		if api.sources[sourceID] == nil {
+			log.Println(individualID + " source [" + sourceID + "]: is nil?!")
+			continue
+		}
+
 		if _, ok := api.sources[sourceID].Citations[citation.Page]; ok {
 			c = api.sources[sourceID].Citations[citation.Page]
 		} else {
@@ -56,8 +63,6 @@ func (api *apiControl) addIndividualCitations(individualID string, citations []*
 		}
 		c.Individuals[individualID], _ = api.getIndividualIndexEntry(individualID)
 	}
-
-	return nil
 }
 
 func (api *apiControl) exportIndividualAPI() error {
@@ -75,31 +80,30 @@ func (api *apiControl) exportIndividualAPI() error {
 
 		j, err := json.Marshal(individual)
 		if err != nil {
-			fh.Close()
+			_ = fh.Close()
 			return err
 		}
 		_, err = fh.Write(j)
 		if err != nil {
-			fh.Close()
+			_ = fh.Close()
 			return err
 		}
-		fh.Close()
+		_ = fh.Close()
 	}
 
 	return nil
 }
 
 func (api *apiControl) exportIndividualPages() error {
-
 	const personPageTemplate = `---
 title: "{{ .Ref.Name }}{{ if or .Ref.Birth .Ref.Death }} ({{ .Ref.Birth }} - {{ .Ref.Death }}){{ end }}"
 url: "/{{ .ID }}/"
 categories:
   - Person
 {{ if .Ref.LastNames }}lastnames:
-  {{ range .Ref.LastNames }}- {{ . }}{{ end }}
+  {{ range .Ref.LastNames }}- "{{ . }}"{{ end }}
 {{- end }}
-{{ if .Ref.Photo }}portrait: {{ .Ref.Photo }}{{end}}
+{{ if .Ref.Photo }}portrait: "{{ .Ref.Photo }}"{{end}}
 ---
 <script src="/js/jquery.min.js"></script>
 <script src="/js/idrisutil.js"></script>
@@ -134,7 +138,9 @@ $(document).ready(function(){
 		if err != nil {
 			return err
 		}
-		defer fh.Close()
+		defer func(fh *os.File) {
+			_ = fh.Close()
+		}(fh)
 
 		tpl := template.New("person")
 		tpl, err = tpl.Parse(personPageTemplate)
@@ -151,8 +157,12 @@ $(document).ready(function(){
 func extractNames(name string) (string, string) {
 	var given, family string
 
-	re := regexp.MustCompile("^([^/]+) +/(.+)/(.*)$")
+	re := regexp.MustCompile("^([^/]+ )? */([^/]+)/(.*)$")
 	names := re.FindStringSubmatch(name)
+	if len(names) < 3 {
+		log.Println("Could not split name for: " + name)
+		return name, ""
+	}
 	given = names[1]
 	family = names[2]
 

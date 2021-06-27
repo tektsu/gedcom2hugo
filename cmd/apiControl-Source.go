@@ -10,11 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tektsu/gedcom"
+	"github.com/iand/gedcom"
 )
 
 func (api *apiControl) addSources() error {
-
 	for _, source := range api.gc.Source {
 		err := api.addSource(source)
 		if err != nil {
@@ -26,13 +25,12 @@ func (api *apiControl) addSources() error {
 }
 
 func (api *apiControl) addSource(source *gedcom.SourceRecord) error {
-
 	response := &sourceResponse{
 		ID:          strings.ToLower(source.Xref),
-		Author:      source.Author,
+		Author:      source.Originator,
 		Title:       source.Title,
-		Publication: source.Publication,
-		Ref:         source.GetReferenceString(),
+		Publication: source.PublicationFacts,
+		Ref:         GetReferenceString(source),
 		Citations:   make(sourceCitationResponses),
 	}
 
@@ -49,17 +47,19 @@ func (api *apiControl) addSource(source *gedcom.SourceRecord) error {
 	response.RefNum = v
 
 	// Get files.
-	if len(source.Object) > 0 {
+	if len(source.Media) > 0 {
 		r1 := regexp.MustCompile("^.*Roots/")
 		r2 := regexp.MustCompile("^.*/idris_project/sources/")
 		m, _ := regexp.Compile("^/")
-		for _, o := range source.Object {
-			name := r1.ReplaceAllString(o.File.Name, "")
-			name = r2.ReplaceAllString(name, "")
-			if m.MatchString(name) {
-				name = filepath.Base(name)
+		for _, o := range source.Media {
+			for _, i := range o.File {
+				name := r1.ReplaceAllString(i.Name, "")
+				name = r2.ReplaceAllString(name, "")
+				if m.MatchString(name) {
+					name = filepath.Base(name)
+				}
+				response.File = append(response.File, name)
 			}
-			response.File = append(response.File, name)
 		}
 	}
 
@@ -73,6 +73,50 @@ func (api *apiControl) addSource(source *gedcom.SourceRecord) error {
 	api.sources[response.ID] = response
 
 	return nil
+}
+
+func GetReferenceString(s *gedcom.SourceRecord) string {
+	var refs []string
+	if s.Originator != "" {
+		refs = append(refs, s.Originator)
+	}
+	if s.Title != "" {
+		refs = append(refs, fmt.Sprintf("\"%s\"", s.Title))
+	}
+
+	var pubFacts, pubName, pubDate string
+	pubParts := strings.Split(s.PublicationFacts, ";")
+	r, _ := regexp.Compile("^ *([^:]+): (.+)$")
+	for _, p := range pubParts {
+		match := r.FindStringSubmatch(p)
+		if len(match) > 0 {
+			switch label := match[1]; label {
+			case "Location":
+				pubFacts = match[2]
+			case "Name":
+				pubName = match[2]
+			case "Date":
+				pubDate = match[2]
+			}
+		}
+	}
+	if pubName != "" {
+		if pubFacts != "" {
+			pubFacts += ", "
+		}
+		pubFacts += pubName
+	}
+	if pubDate != "" {
+		if pubFacts != "" {
+			pubFacts += ", "
+		}
+		pubFacts += pubDate
+	}
+	if pubFacts != "" {
+		refs = append(refs, "("+pubFacts+")")
+	}
+
+	return strings.Join(refs, ", ")
 }
 
 func (api *apiControl) exportSourceAPI() error {
@@ -90,22 +134,21 @@ func (api *apiControl) exportSourceAPI() error {
 
 		j, err := json.Marshal(source)
 		if err != nil {
-			fh.Close()
+			_ = fh.Close()
 			return err
 		}
 		_, err = fh.Write(j)
 		if err != nil {
-			fh.Close()
+			_ = fh.Close()
 			return err
 		}
-		fh.Close()
+		_ = fh.Close()
 	}
 
 	return nil
 }
 
 func (api *apiControl) exportSourcePages() error {
-
 	// sourcePageTemplate is the tmplate used to generaate a source web page.
 	const sourcePageTemplate = `---
 url: "/{{ .ID }}/"
@@ -138,7 +181,9 @@ $(document).ready(function(){
 		if err != nil {
 			return err
 		}
-		defer fh.Close()
+		defer func(fh *os.File) {
+			_ = fh.Close()
+		}(fh)
 
 		tpl := template.New("source")
 		tpl, err = tpl.Parse(sourcePageTemplate)

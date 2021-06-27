@@ -10,46 +10,54 @@ import (
 
 	"encoding/json"
 
-	"github.com/tektsu/gedcom"
+	"github.com/iand/gedcom"
 )
 
-func (api *apiControl) addPhoto(o *gedcom.ObjectRecord) *photoResponse {
+func (api *apiControl) addPhoto(o *gedcom.MediaRecord) *photoResponse {
 	key := getPhotoKeyFromObject(o)
 	if _, ok := api.photos[key]; !ok {
-		api.photos[key] = &photoResponse{
-			ID:    key,
-			File:  filepath.Base(o.File.Name),
-			Title: o.File.Title,
-		}
-		if o.File.Description != nil {
-			api.photos[key].Description = o.File.Description.Note
-		}
+		for _, record := range o.File {
+			api.photos[key] = &photoResponse{
+				ID:    key,
+				File:  filepath.Base(record.Name),
+				Title: record.Title,
+			}
 
-		for _, note := range o.Note {
-			api.photos[key].Notes = append(api.photos[key].Notes, note.Note)
-		}
+			for i := range o.UserDefined {
+				if o.UserDefined[i].Tag == "_TEXT" {
+					api.photos[key].Description = o.UserDefined[i].Value
+					break
+				}
+			}
 
-		file, err := os.Open(o.File.Name)
-		defer file.Close()
-		if err != nil {
-			fmt.Printf("%v\n", err)
-			return api.photos[key]
-		}
+			for _, note := range o.Note {
+				api.photos[key].Notes = append(api.photos[key].Notes, note.Note)
+			}
 
-		img, _, err := image.DecodeConfig(file) // Image Struct
-		if err != nil {
-			fmt.Printf("hsgdhajsgdjhas %s: %v\n", o.File.Name, err)
-			return api.photos[key]
-		}
+			file, err := os.Open(record.Name)
+			defer func(file *os.File) {
+				_ = file.Close()
+			}(file)
+			if err != nil {
+				fmt.Printf("%v\n", err)
+				return api.photos[key]
+			}
 
-		api.photos[key].Width = img.Width
-		api.photos[key].Height = img.Height
+			img, _, err := image.DecodeConfig(file) // Image Struct
+			if err != nil {
+				fmt.Printf("hsgdhajsgdjhas %s: %v\n", record.Name, err)
+				return api.photos[key]
+			}
+
+			api.photos[key].Width = img.Width
+			api.photos[key].Height = img.Height
+		}
 	}
 
 	return api.photos[key]
 }
 
-func (api *apiControl) addPhotoForIndividual(o *gedcom.ObjectRecord, i *individualResponse) *photoResponse {
+func (api *apiControl) addPhotoForIndividual(o *gedcom.MediaRecord, i *individualResponse) *photoResponse {
 	response := api.addPhoto(o)
 
 	ir, err := api.getIndividualIndexEntry(i.ID)
@@ -62,7 +70,7 @@ func (api *apiControl) addPhotoForIndividual(o *gedcom.ObjectRecord, i *individu
 	return response
 }
 
-func (api *apiControl) addPhotoForFamily(o *gedcom.ObjectRecord, f *familyResponse) *photoResponse {
+func (api *apiControl) addPhotoForFamily(o *gedcom.MediaRecord, f *familyResponse) *photoResponse {
 	response := api.addPhoto(o)
 
 	fr, err := api.getFamilyIndexEntry(f.ID)
@@ -76,7 +84,6 @@ func (api *apiControl) addPhotoForFamily(o *gedcom.ObjectRecord, f *familyRespon
 }
 
 func (api *apiControl) buildFromGedcom(g *gedcom.Gedcom) error {
-
 	api.gc = g
 
 	var err error
@@ -117,15 +124,15 @@ func (api *apiControl) exportPhotoAPI() error {
 
 		j, err := json.Marshal(photo)
 		if err != nil {
-			fh.Close()
+			_ = fh.Close()
 			return err
 		}
 		_, err = fh.Write(j)
 		if err != nil {
-			fh.Close()
+			_ = fh.Close()
 			return err
 		}
-		fh.Close()
+		_ = fh.Close()
 	}
 	file := filepath.Join(photoAPIDir, strings.ToLower("list.json"))
 	fh, err := os.Create(file)
@@ -135,27 +142,26 @@ func (api *apiControl) exportPhotoAPI() error {
 
 	j, err := json.Marshal(photoIDs)
 	if err != nil {
-		fh.Close()
+		_ = fh.Close()
 		return err
 	}
 	_, err = fh.Write(j)
 	if err != nil {
-		fh.Close()
+		_ = fh.Close()
 		return err
 	}
-	fh.Close()
+	_ = fh.Close()
 
 	return nil
 }
 
 func (api *apiControl) exportPhotoPages() error {
-
 	const photoPageTemplate = `---
 url: "/{{ .ID }}/"
 categories:
   - Photo
-lead_photo: {{ .File }}
-photo_key: {{ .ID  }}
+lead_photo: "{{ .File }}"
+photo_key: "{{ .ID  }}"
 ---
 <script src="/js/jquery.min.js"></script>
 <script src="/js/photodisplay.js"></script>
@@ -177,14 +183,15 @@ $(document).ready(function(){
 	}
 
 	for key, photo := range api.photos {
-
 		file := filepath.Join(photoDir, key+".md")
 
 		fh, err := os.Create(file)
 		if err != nil {
 			return err
 		}
-		defer fh.Close()
+		defer func(fh *os.File) {
+			_ = fh.Close()
+		}(fh)
 
 		tpl := template.New("photo")
 		tpl, err = tpl.Parse(photoPageTemplate)
@@ -197,9 +204,9 @@ $(document).ready(function(){
 	return nil
 }
 
-// Local functions
-
-func getPhotoKeyFromObject(o *gedcom.ObjectRecord) string {
-	key := "p" + strings.ToLower(strings.Replace(filepath.Base(o.File.Name), ".", "", -1))
-	return key
+func getPhotoKeyFromObject(o *gedcom.MediaRecord) string {
+	if len(o.File) > 0 {
+		return "p" + strings.ToLower(strings.Replace(filepath.Base(o.File[0].Name), ".", "", -1))
+	}
+	return "";
 }
