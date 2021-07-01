@@ -3,11 +3,11 @@ package cmd
 import (
 	"bytes"
 	"errors"
-	"fmt"
-	"io/ioutil"
-
-	"github.com/tektsu/gedcom"
+	"github.com/iand/gedcom"
 	"github.com/urfave/cli"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 var tagTable map[string]string
@@ -15,7 +15,6 @@ var tagTable map[string]string
 // Generate reads the GEDCOM file and builds the Hugo input files.
 //noinspection GoUnusedExportedFunction
 func Generate(cx *cli.Context) error {
-
 	tagTable = map[string]string{
 		"BAPM":  "Baptism",
 		"BIRT":  "Birth",
@@ -40,62 +39,80 @@ func Generate(cx *cli.Context) error {
 
 	gc, err := readGedcom(cx)
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
 	api := newAPIControl(cx)
 
 	err = api.buildFromGedcom(gc)
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
 	err = api.exportSourceAPI()
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
 	err = api.exportSourcePages()
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
 	err = api.exportIndividualAPI()
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
 	err = api.exportIndividualPages()
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
 	err = api.exportFamilyAPI()
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
 	err = api.exportFamilyPages()
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
 	err = api.exportPhotoAPI()
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
 	err = api.exportPhotoPages()
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
-	// Configure for JSON headers.
-	err = ioutil.WriteFile("static/api/_headers", []byte("/*  Access-Control-Allow-Origin: *  content-type: application/json; charset=utf-8"), 0644)
+	err = configureForJsonHeaders(api, err)
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
+	return nil
+}
+
+func configureForJsonHeaders(api *apiControl, err error) error {
+	headers := filepath.Join(api.cx.String("project"), "/static/api/_headers")
+	file, err := os.Create(headers)
+	if file == nil {
+		return nil
+	}
+	if err != nil {
+		_ = file.Close()
+		return err
+	}
+	_, err = file.Write([]byte("/*  Access-Control-Allow-Origin: *  content-type: application/json; charset=utf-8"))
+	if err != nil {
+		_ = file.Close()
+		return err
+	}
+	_ = file.Close()
 	return nil
 }
 
@@ -113,16 +130,7 @@ func readGedcom(cx *cli.Context) (*gedcom.Gedcom, error) {
 	}
 
 	decoder := gedcom.NewDecoder(bytes.NewReader(data))
-	decoder.SetUnrecTagFunc(func(l int, t, v, x string) {
-		if t[0:1] == "_" {
-			return
-		}
-		fmt.Printf("Unrecognized tag: %d %s %s", l, t, v)
-		if x != "" {
-			fmt.Printf(" (%s)", x)
-		}
-		fmt.Println("")
-	})
+
 	gc, err = decoder.Decode()
 	if err != nil {
 		return gc, err

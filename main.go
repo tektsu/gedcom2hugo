@@ -3,15 +3,14 @@ package main
 import (
 	"os"
 
-	"github.com/tektsu/gedcom2hugo/cmd"
+	"./cmd"
 	"github.com/urfave/cli"
 )
 
 const version = "0.0.0.1"
 
 func main() {
-
-	cli.VersionFlag = cli.BoolFlag{
+	cli.VersionFlag = &cli.BoolFlag{
 		Name:  "version, V",
 		Usage: "print only the version",
 	}
@@ -22,19 +21,19 @@ func main() {
 	app.Version = version
 
 	app.Flags = []cli.Flag{
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "verbose, v",
 			Usage: "Enable verbose output",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "debug, d",
 			Usage: "Enable debugging output",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "gedcom, g",
 			Usage: "Specify the input GEDCOM file",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "project, p",
 			Value: ".",
 			Usage: "Specify the top level directory of the Hugo project",
@@ -45,5 +44,5 @@ func main() {
 
 	app.Action = cmd.Generate
 
-	app.Run(os.Args)
+	_ = app.Run(os.Args)
 }

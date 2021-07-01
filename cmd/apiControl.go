@@ -5,7 +5,7 @@ import (
 	_ "image/png"
 	"strings"
 
-	"github.com/tektsu/gedcom"
+	"github.com/iand/gedcom"
 	"github.com/urfave/cli"
 )
 

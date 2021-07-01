@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tektsu/gedcom"
+	"github.com/iand/gedcom"
 )
 
 func (api *apiControl) addFamilies() error {
@@ -24,7 +24,6 @@ func (api *apiControl) addFamilies() error {
 }
 
 func (api *apiControl) addFamily(family *gedcom.FamilyRecord) error {
-
 	fc := newFamilyControl(api)
 	fc.family = family
 	fc.response = &familyResponse{
@@ -60,7 +59,7 @@ func (api *apiControl) addFamily(family *gedcom.FamilyRecord) error {
 	}
 
 	for _, i := range family.Child {
-		child, err := api.getIndividualIndexEntry(i.Person.Xref)
+		child, err := api.getIndividualIndexEntry(i.Xref)
 		if err != nil {
 			return err
 		}
@@ -116,15 +115,15 @@ func (api *apiControl) exportFamilyAPI() error {
 
 		j, err := json.Marshal(family)
 		if err != nil {
-			fh.Close()
+			_ = fh.Close()
 			return err
 		}
 		_, err = fh.Write(j)
 		if err != nil {
-			fh.Close()
+			_ = fh.Close()
 			return err
 		}
-		fh.Close()
+		_ = fh.Close()
 	}
 
 	return nil
@@ -170,7 +169,9 @@ $(document).ready(function(){
 		if err != nil {
 			return err
 		}
-		defer fh.Close()
+		defer func(fh *os.File) {
+			_ = fh.Close()
+		}(fh)
 
 		tpl := template.New("family")
 		tpl, err = tpl.Parse(familyPageTemplate)
